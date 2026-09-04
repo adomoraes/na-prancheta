@@ -1,0 +1,6 @@
+{
+  "name": "Na Prancheta",
+  "description": "Sistema integrado de gestão esportiva amadora, protocolo de vestiário T-50/T-35/T-25, presença, vaquinha e scout.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
