@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 2,
+  "startedAt": "2026-09-18T15:20:00-03:00",
+  "lastCheckpoint": "2026-09-18T17:16:30-03:00",
+  "completedAgents": [
+    "paradigm_advisor",
+    "curator",
+    "strategist",
+    "designer",
+    "screen_translator",
+    "inspector"
+  ],
+  "pendingAgents": [],
+  "currentAgent": null,
+  "pendingDecisions": [],
+  "artifacts": {
+    "migration_brief.md": {
+      "path": "_reversa_sdd/migration/migration_brief.md",
+      "producedBy": "orchestrator",
+      "generatedAt": "2026-09-18T15:20:00-03:00"
+    },
+    "paradigm_decision.md": {
+      "path": "_reversa_sdd/migration/paradigm_decision.md",
+      "producedBy": "paradigm_advisor",
+      "generatedAt": "2026-09-18T15:25:34-03:00",
+      "hash": "sha256:e8fa9e4f7b8ed3230458f4fc76d8b434d1565b3cdc475b92b9645d673477e2a7"
+    },
+    "target_business_rules.md": {
+      "path": "_reversa_sdd/migration/target_business_rules.md",
+      "producedBy": "curator",
+      "generatedAt": "2026-09-18T15:30:00-03:00",
+      "hash": "sha256:b32c8b01480db14659fb7868f56ab392f836285a10fe0715d014f6d4320d4a51"
+    },
+    "discard_log.md": {
+      "path": "_reversa_sdd/migration/discard_log.md",
+      "producedBy": "curator",
+      "generatedAt": "2026-09-18T15:30:00-03:00",
+      "hash": "sha256:82b03278338a2df4263401065595341cf8c3ad7d353a878c42fdeb6a2dfd2612"
+    },
+    "ambiguity_log.md": {
+      "path": "_reversa_sdd/migration/ambiguity_log.md",
+      "producedBy": "orchestrator",
+      "generatedAt": "2026-09-18T17:16:00-03:00",
+      "hash": "sha256:41ffe7ee505bd074449eb73921b683432324888a179c01692e5f85d639ad4d5f"
+    },
+    "migration_strategy.md": {
+      "path": "_reversa_sdd/migration/migration_strategy.md",
+      "producedBy": "strategist",
+      "generatedAt": "2026-09-18T15:40:00-03:00",
+      "hash": "sha256:63995cf2105005089c05fde32b09d2f472d836ffc883ccb34a1ceb93dd1de42b"
+    },
+    "risk_register.md": {
+      "path": "_reversa_sdd/migration/risk_register.md",
+      "producedBy": "strategist",
+      "generatedAt": "2026-09-18T15:40:00-03:00",
+      "hash": "sha256:bad9c5f9f63afefec3777d75bf74458b29f182b293e80604252c6a3a61e8b4bd"
+    },
+    "cutover_plan.md": {
+      "path": "_reversa_sdd/migration/cutover_plan.md",
+      "producedBy": "strategist",
+      "generatedAt": "2026-09-18T15:40:00-03:00",
+      "hash": "sha256:a9c8d060ba75d2b22c4c501784d7ba34a13b083784d98a4832d09b3b0df519e6"
+    },
+    "topology_decision.md": {
+      "path": "_reversa_sdd/migration/topology_decision.md",
+      "producedBy": "designer",
+      "generatedAt": "2026-09-18T15:44:00-03:00",
+      "hash": "sha256:edfc56be3cd974bd7ae79898e3d4dd4f3516e53ba6295fe80e4ff1c403cfa102"
+    },
+    "target_architecture.md": {
+      "path": "_reversa_sdd/migration/target_architecture.md",
+      "producedBy": "designer",
+      "generatedAt": "2026-09-18T15:48:00-03:00",
+      "hash": "sha256:5d16669fd85837160b6026b8aac0e9ca7a0c15325e8d77687478eed6bd5b4e05"
+    },
+    "target_domain_model.md": {
+      "path": "_reversa_sdd/migration/target_domain_model.md",
+      "producedBy": "designer",
+      "generatedAt": "2026-09-18T15:48:00-03:00",
+      "hash": "sha256:40ca213997190618e51eae468c71c07b08311cf65c65c52371a8e203224fbc28"
+    },
+    "target_data_model.md": {
+      "path": "_reversa_sdd/migration/target_data_model.md",
+      "producedBy": "designer",
+      "generatedAt": "2026-09-18T15:50:00-03:00",
+      "hash": "sha256:a834fb2a494e3810c9ef7d771720556c8321491cb0d0ea518e399cbb51bfc41a"
+    },
+    "data_migration_plan.md": {
+      "path": "_reversa_sdd/migration/data_migration_plan.md",
+      "producedBy": "designer",
+      "generatedAt": "2026-09-18T15:50:00-03:00",
+      "hash": "sha256:24493ba63f299d1454e27d9e2dfcc744a2cb83a6de5a898904c670804b195fcd"
+    },
+    "screen_modernization_decision.md": {
+      "path": "_reversa_sdd/migration/screen_modernization_decision.md",
+      "producedBy": "screen_translator",
+      "generatedAt": "2026-09-18T15:53:00-03:00",
+      "hash": "sha256:fe00118e3677be46a68b7572960b4eafe2b781fe5aac276be15d9be092a6ce49"
+    },
+    "target_screens.md": {
+      "path": "_reversa_sdd/migration/target_screens.md",
+      "producedBy": "screen_translator",
+      "generatedAt": "2026-09-18T15:57:00-03:00",
+      "hash": "sha256:4da2a9198bfbc3a53c0fca3e5a631fd17c5202cd2f19854d37204fafc944679d"
+    },
+    "screen_deviation_log.md": {
+      "path": "_reversa_sdd/migration/screen_deviation_log.md",
+      "producedBy": "screen_translator",
+      "generatedAt": "2026-09-18T15:57:00-03:00",
+      "hash": "sha256:f917009de91fe1ea421b45ddcc43974f5b1178c6517e49e342a5c5761c415a35"
+    },
+    "parity_specs.md": {
+      "path": "_reversa_sdd/migration/parity_specs.md",
+      "producedBy": "inspector",
+      "generatedAt": "2026-09-18T17:15:00-03:00",
+      "hash": "sha256:4e4796783547a7c6347e66604d920015c498fe23e6c1fa18105b010a7a4fc040"
+    },
+    "parity_tests": {
+      "path": "_reversa_sdd/migration/parity_tests/",
+      "producedBy": "inspector",
+      "generatedAt": "2026-09-18T17:14:45-03:00",
+      "filesCount": 6
+    },
+    "handoff.md": {
+      "path": "_reversa_sdd/migration/handoff.md",
+      "producedBy": "orchestrator",
+      "generatedAt": "2026-09-18T17:16:30-03:00",
+      "hash": "sha256:04206a2bde7152c6657c8b069caad9180f071b74574fd0c1f1adb4658020b223"
+    }
+  },
+  "auto": false,
+  "engine": "antigravity",
+  "reversaVersion": "1.3.3",
+  "briefPath": "_reversa_sdd/migration/migration_brief.md",
+  "expectedLegacyArtifacts": "references/expected_legacy_artifacts.yaml"
+}

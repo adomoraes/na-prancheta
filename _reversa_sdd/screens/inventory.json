@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-18T15:53:00-03:00",
+  "producedBy": "screen-translator",
+  "sourcePlatform": "web-spa",
+  "detectionConfidence": "confirmed",
+  "screens": [
+    {
+      "id": "SCR-0001",
+      "canonicalName": "VestiarioTimeline",
+      "title": "Linha do Tempo e Protocolo do Vestiário",
+      "legacyOrigin": {
+        "file": "src/components/VestiarioTimeline.tsx",
+        "line": 1,
+        "paragraph": "VestiarioTimeline"
+      },
+      "kind": "component",
+      "description": "Cronômetro regressivo T-X, marcos temporais e fases da sequência fisiológica de aquecimento."
+    },
+    {
+      "id": "SCR-0002",
+      "canonicalName": "MatchCardConfirmacao",
+      "title": "Ficha da Partida e Confirmação de Presença",
+      "legacyOrigin": {
+        "file": "src/components/MatchCardConfirmacao.tsx",
+        "line": 1,
+        "paragraph": "MatchCardConfirmacao"
+      },
+      "kind": "component",
+      "description": "Ficha do confronto, botões de 1 toque (Vou, Não Vou, Dúvida), lista de espera e segregação de elenco."
+    },
+    {
+      "id": "SCR-0003",
+      "canonicalName": "PranchetaTecnica",
+      "title": "Prancheta Tática e Escalação de Campo",
+      "legacyOrigin": {
+        "file": "src/components/PranchetaTecnica.tsx",
+        "line": 1,
+        "paragraph": "PranchetaTecnica"
+      },
+      "kind": "component",
+      "description": "Campo tático interativo 4-3-3, seleção de 11 titulares, banco de reservas e trava disciplinar T-35."
+    },
+    {
+      "id": "SCR-0004",
+      "canonicalName": "TesoureiroColeta",
+      "title": "Painel de Arrecadação e Vaquinha do Jogo",
+      "legacyOrigin": {
+        "file": "src/components/TesoureiroColeta.tsx",
+        "line": 1,
+        "paragraph": "TesoureiroColeta"
+      },
+      "kind": "component",
+      "description": "Cota da arbitragem, quitação de taxas via PIX, métricas de arrecadação e exportação para WhatsApp."
+    },
+    {
+      "id": "SCR-0005",
+      "canonicalName": "ScoutPosJogo",
+      "title": "Scout Estatístico Pós-Jogo e Eleição de MVP",
+      "legacyOrigin": {
+        "file": "src/components/ScoutPosJogo.tsx",
+        "line": 1,
+        "paragraph": "ScoutPosJogo"
+      },
+      "kind": "component",
+      "description": "Registro de gols, assistências, cartões, minutagem e eleição estritamente exclusiva do Craque do Jogo."
+    },
+    {
+      "id": "SCR-0006",
+      "canonicalName": "AlmoxarifadoView",
+      "title": "Custódia de Materiais e Trava da Resenha",
+      "legacyOrigin": {
+        "file": "src/components/AlmoxarifadoView.tsx",
+        "line": 1,
+        "paragraph": "AlmoxarifadoView"
+      },
+      "kind": "component",
+      "description": "Conferência de camisas desviradas, 6 bolas calibradas, kits e trava de segurança da resenha social."
+    },
+    {
+      "id": "SCR-0007",
+      "canonicalName": "SelfOnboardingModal",
+      "title": "Cadastro Rápido e Entrada no Elenco",
+      "legacyOrigin": {
+        "file": "src/components/SelfOnboardingModal.tsx",
+        "line": 1,
+        "paragraph": "SelfOnboardingModal"
+      },
+      "kind": "modal",
+      "description": "Modal de identificação rápida de atleta, definição de camisa única e posição primária/secundária."
+    }
+  ]
+}
