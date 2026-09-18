@@ -83,7 +83,7 @@ const [filter, setFilter] = useState<'todos' | 'confirmado' | 'duvida'>('todos')
 
 ---
 
-## 8. Riscos e Lacunas (🔴 / 🟡)
+## 8. Riscos e Lacunas (🔴 / 🟡 / 🟢)
 
-- 🔴 **LACUNA**: Não há limite configurável de vagas para a partida. Atualmente, qualquer número de atletas pode confirmar presença sem transbordamento automático para `lista_espera`.
+- 🟢 **CONFIRMADO (Regra Validada)**: O sistema deve impor limite máximo de confirmados com fila de espera (`status: 'lista_espera'`), a ser incorporado na evolução do componente de confirmação.
 - 🟡 **INFERIDO**: O `currentAtletaId` é simulado estaticamente em `App.tsx` baseado em flag booleana de tesoureiro em vez de sessão de autenticação real.

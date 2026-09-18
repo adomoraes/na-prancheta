@@ -27,6 +27,7 @@ A feature de **Confirmação de Presença e Ficha do Jogo** centraliza as inform
 - **RN-CP-02 (Base de Elegibilidade Tática e Financeira)** 🟢 CONFIRMADO: Apenas atletas com status `'confirmado'` são habilitados para escalação na prancheta tática e incluídos na vaquinha do tesoureiro (`src/components/PranchetaTecnica.tsx:17-20`, `src/components/TesoureiroColeta.tsx:23-27`).
 - **RN-CP-03 (Sinalização de Vínculo de Convidado)** 🟢 CONFIRMADO: Atletas com `tipo_vinculo === 'convidado'` devem exibir uma tag visual roxa distintiva no quadro de presenças (`src/components/MatchCardConfirmacao.tsx:234-238`).
 - **RN-CP-04 (Alerta Visual de Atraso no Quadro)** 🟢 CONFIRMADO: Atletas cujo registro textual indicar atraso no vestiário devem exibir o aviso destacado `"Atrasou (Banco)"` (`src/components/MatchCardConfirmacao.tsx:252-256`).
+- **RN-CP-05 (Teto de Presenças e Lista de Espera)** 🟢 CONFIRMADO: A partida possui limite de vagas para confirmados; ao atingir o teto estipulado para o evento, confirmações subsequentes transbordam compulsoriamente para o status `'lista_espera'` (validado com o usuário em `questions.md#pergunta-5`).
 
 ---
 

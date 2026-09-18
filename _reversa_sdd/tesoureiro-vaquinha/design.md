@@ -110,8 +110,7 @@ const [copiedResumo, setCopiedResumo] = useState<boolean>(false);
 
 ---
 
-## 8. Riscos e Lacunas (🔴 / 🟡)
+## 8. Riscos e Lacunas (🔴 / 🟡 / 🟢)
 
-- 🔴 **LACUNA**: A chave PIX (`chavePixTesoureiro = '11943210987'`) está hardcoded diretamente no componente `TesoureiroColeta.tsx:41`, inviabilizando a troca dinâmica de tesoureiro sem alteração no código-fonte.
-- 🔴 **LACUNA**: O custo da arbitragem (`custoArbitragem = 300.0`) está fixo no código (linha 38) em vez de ser um atributo dinâmico da entidade `Evento`.
+- 🟢 **CONFIRMADO (Decisão de Migração)**: A parametrização dinâmica da chave PIX do tesoureiro e dos custos de arbitragem foi definida para resolução na camada de backend durante a migração (`_reversa_migrate`), mantendo a chave atual como valor mock do legado.
 - 🟡 **INFERIDO**: Não há conciliação com extrato bancário ou QR Code dinâmico do Banco Central (EMV/Pix Copia e Cola); a validação de quitação depende estritamente da conferência visual manual do tesoureiro.

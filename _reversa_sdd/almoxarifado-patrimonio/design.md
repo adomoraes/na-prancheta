@@ -87,8 +87,7 @@ const [malaConferida, setMalaConferida] = useState<boolean>(false);
 
 ---
 
-## 8. Riscos e Lacunas (🔴 / 🟡)
+## 8. Riscos e Lacunas (🔴 / 🟡 / 🟢)
 
-- 🔴 **LACUNA**: O estado do checklist (`malaConferida`, `uniformesLadoCorreto`, `bolasRecolhidas`) é volátil (`useState`). Ao recarregar a página (F5) ou alternar de aba na navegação do aplicativo, a conferência é resetada para desmarcada.
-- 🔴 **LACUNA**: O nome do responsável pela custódia (`"Carlos Eduardo (Kadu)"`) está chumbado no JSX (linha 37) em vez de ser alimentado dinamicamente a partir dos metadados da partida ou do perfil do custodiante.
-- 🟡 **INFERIDO**: A "trava da resenha" é puramente visual/informativa; não bloqueia telas do sistema ou fluxos concorrentes.
+- 🟢 **CONFIRMADO (Decisão de Migração)**: A persistência do checklist de devolução pós-jogo e do custodiante das malas foi validada para tratamento na arquitetura de backend durante a migração (`_reversa_migrate`), mantendo o comportamento de memória local no frontend legado.
+- 🟡 **INFERIDO**: A "trava da resenha" no frontend legado opera em nível visual/informativo, devendo ser estendida para travas de permissão na evolução do sistema.

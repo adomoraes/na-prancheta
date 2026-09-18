@@ -99,8 +99,8 @@ const [tipoVinculo, setTipoVinculo] = useState<TipoVinculo>('mensalista');
 
 ---
 
-## 8. Riscos e Lacunas (🔴 / 🟡)
+## 8. Riscos e Lacunas (🔴 / 🟡 / 🟢)
 
-- 🔴 **LACUNA**: Não há checagem de duplicidade de número de camisa (`numero_camisa`). Dois atletas podem ser cadastrados com o mesmo número, provocando conflito visual no gramado da prancheta.
-- 🔴 **LACUNA**: Ausência de validação de máscara no campo de telefone WhatsApp (aceita caracteres alfanuméricos arbitrários).
+- 🟢 **CONFIRMADO (Regra Validada)**: O número de camisa é único e intransferível no elenco ativo. Na evolução do formulário de onboarding, deve-se validar `atletas.some(a => a.numero_camisa === numeroCamisa)` e rejeitar duplicidades.
+- 🟡 **INFERIDO**: Ausência de validação de máscara no campo de telefone WhatsApp (aceita caracteres alfanuméricos arbitrários).
 - 🟡 **INFERIDO**: A pontualidade é atribuída compulsoriamente como "No Horário", impedindo cadastrar um convidado que tenha chegado após o horário regulamentar de troca.

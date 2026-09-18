@@ -28,7 +28,7 @@ A feature **Scout Pós-Jogo Simplificado** oferece uma interface mobile ágil de
 - **RN-SPJ-01 (Elegibilidade de Scout aos Confirmados)** 🟢 CONFIRMADO: Apenas atletas com status de presença `'confirmado'` são exibidos no seletor de scout pós-jogo (`src/components/ScoutPosJogo.tsx:24-27`).
 - **RN-SPJ-02 (Piso Não Negativo em Contadores Estatísticos)** 🟢 CONFIRMADO: Nenhuma métrica numérica de scout (gols, assistências, minutagem, cartões) pode assumir valor inferior a zero. O decremento abaixo de zero deve ser ignorado (`src/components/ScoutPosJogo.tsx:44-45`).
 - **RN-SPJ-03 (Granularidade de Minutagem em Saltos de 5 Minutos)** 🟢 CONFIRMADO: Para acelerar a digitação na beira do campo, a minutagem disputada pelo atleta é ajustada em blocos de $\pm 5$ minutos, iniciando no padrão de 40 minutos (`src/components/ScoutPosJogo.tsx:34, 237-248`).
-- **RN-SPJ-04 (Craque do Jogo - MVP)** 🟢 CONFIRMADO: O status `foi_mvp` pode ser atribuído ao atleta selecionado por meio de alternância (toggle), destacando seu nome no placar do jogo e ativando estilo dourado/âmbar (`src/components/ScoutPosJogo.tsx:50-54, 94-106, 170-180`).
+- **RN-SPJ-04 (Craque do Jogo - MVP Estritamente Exclusivo)** 🟢 CONFIRMADO: O status `foi_mvp` é estritamente exclusivo por partida (apenas 1 atleta eleito). A atribuição do título desmarca compulsoriamente qualquer atleta previamente condecorado na rodada (`src/components/ScoutPosJogo.tsx:50-54`, validado com o usuário em `questions.md#pergunta-4`).
 - **RN-SPJ-05 (Consolidação Agregada Ofensiva)** 🟢 CONFIRMADO: O total de gols e assistências do time é recalculado dinamicamente pela soma dos scouts de todos os atletas participantes (`src/components/ScoutPosJogo.tsx:59-60`).
 
 ---

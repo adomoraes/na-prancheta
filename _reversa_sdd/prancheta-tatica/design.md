@@ -124,8 +124,8 @@ const [notifiedPrelecao, setNotifiedPrelecao] = useState<boolean>(false);
 
 ---
 
-## 8. Riscos e Lacunas (🔴 / 🟡)
+## 8. Riscos e Lacunas (🔴 / 🟡 / 🟢)
 
-- 🔴 **LACUNA**: `titularesIds` reside unicamente no estado volátil do React (`useState`). Ao atualizar a página (F5) ou alternar de tela, as alterações táticas efetuadas pela comissão técnica são perdidas, restaurando a escalação padrão estática.
-- 🔴 **LACUNA**: O posicionamento tático no gramado depende puramente da ordem do array (`slice(0,1)`, `slice(1,5)`, etc.). Não existe vínculo inteligente com a propriedade `posicao_principal` do atleta (ex: adicionar um zagueiro no final do array o fará aparecer graficamente na linha de ataque).
+- 🟢 **CONFIRMADO (Decisão de Migração)**: A volatilidade do array `titularesIds` na SPA local-first foi validada com o usuário. A persistência multi-sessão e colaborativa foi formalmente designada como requisito da camada de backend no plano de migração (`_reversa_migrate`).
+- 🟡 **INFERIDO**: O posicionamento tático no gramado depende puramente da ordem do array (`slice(0,1)`, `slice(1,5)`, etc.). Não existe vínculo inteligente com a propriedade `posicao_principal` do atleta (ex: adicionar um zagueiro no final do array o fará aparecer graficamente na linha de ataque).
 - 🟡 **INFERIDO**: A ação "Liberar Escalação (T-35)" simula uma emissão com timeout local de 3 segundos, porém não dispara notificações push, envio de webhook para WhatsApp ou gravação de auditoria em banco.

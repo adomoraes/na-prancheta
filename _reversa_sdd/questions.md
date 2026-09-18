@@ -2,7 +2,7 @@
 
 > Gerado pelo Revisor do Reversa em 2026-09-18  
 > Nível de Documentação: **Detalhado**  
-> Status: 🔴 PENDENTE DE RESPOSTA
+> Status: 🟢 TODAS AS PERGUNTAS RESPONDIDAS E INTEGRADAS
 
 ---
 
@@ -13,7 +13,8 @@
 **Pergunta:** A escalação definida pelo treinador deve ser persistida no `localStorage` (sob uma chave como `naprancheta_titulares`) para sobreviver a recarregamentos de página (F5) e alternância de abas, ou a redefinição para o time padrão a cada sessão é o comportamento esperado?  
 **Impacto:** Se deve persistir, é necessário adicionar uma nova chave no storage local e conectar o handler de alteração tática no componente raiz `App.tsx`.
 
-**Resposta:** <!-- preencha aqui -->
+✅ **Respondida**  
+**Resposta:** as persistencias devem ser consideradas como migração para backend real.
 
 ---
 
@@ -24,7 +25,8 @@
 **Pergunta:** A chave PIX deve ser transferida para um campo configurável na entidade `Evento` (ou associada ao perfil do atleta que atua como tesoureiro do dia), permitindo que o tesoureiro altere sua chave diretamente na interface?  
 **Impacto:** Se sim, o schema da interface `Evento` precisa ser estendido com `tesoureiro_pix: string` e uma tela/modal de configuração deve ser adicionada.
 
-**Resposta:** <!-- preencha aqui -->
+✅ **Respondida**  
+**Resposta:** sim, considero mais via backend também e deve ser devem ser consideradas como migração para backend real.
 
 ---
 
@@ -35,7 +37,8 @@
 **Pergunta:** A conferência da mala, das bolas e das camisas deve ser gravada no `localStorage` (ex: `naprancheta_almoxarifado`) para garantir que o status da resenha (Liberada vs. Bloqueada) permaneça visível para todo o elenco durante a comemoração pós-jogo?  
 **Impacto:** Se sim, os checkboxes devem persistir o objeto de status no storage local com timestamp e identificação de quem realizou a conferência.
 
-**Resposta:** <!-- preencha aqui -->
+✅ **Respondida**  
+**Resposta:** sim, devem ser consideradas como migração para backend real.
 
 ---
 
@@ -46,7 +49,8 @@
 **Pergunta:** O sistema deve impor exclusividade estrita ao MVP (desmarcando automaticamente qualquer atleta anteriormente eleito ao selecionar um novo), ou a eleição pode contemplar múltiplos destaques simultâneos na mesma partida?  
 **Impacto:** Se for estritamente exclusivo, a função `toggleMvp` deve percorrer `scoutList` zerando `foi_mvp` de outros atletas antes de atribuir ao selecionado.
 
-**Resposta:** <!-- preencha aqui -->
+✅ **Respondida**  
+**Resposta:** estritamente exclusivo
 
 ---
 
@@ -57,7 +61,8 @@
 **Pergunta:** Deve existir um teto máximo de atletas confirmados por jogo (ex: 22 ou 25 jogadores), após o qual novas confirmações são automaticamente direcionadas para uma "Lista de Espera"?  
 **Impacto:** Se sim, o enum `StatusConfirmacao` precisa receber o estado `'lista_espera'` e o componente deve travar o botão "Vou" ao atingir a capacidade máxima configurada no evento.
 
-**Resposta:** <!-- preencha aqui -->
+✅ **Respondida**  
+**Resposta:** sim.
 
 ---
 
@@ -68,4 +73,5 @@
 **Pergunta:** O número de camisa preferido deve ser único por atleta no elenco ativo, emitindo aviso de conflito se outro jogador já estiver registrado com o mesmo número, ou números duplicados são permitidos (ex: titulares e reservas com mesma numeração em jogos diferentes)?  
 **Impacto:** Se a numeração for exclusiva, a submissão do formulário de onboarding deve validar a existência prévia do número no array `atletas`.
 
-**Resposta:** <!-- preencha aqui -->
+✅ **Respondida**  
+**Resposta:** numeração exclusiva por atleta.

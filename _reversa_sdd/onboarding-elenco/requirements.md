@@ -33,6 +33,7 @@ A feature **Self-Onboarding do Atleta** permite a integração cadastral express
   2. Presença confirmada (`status: 'confirmado'`) em `naprancheta_presencas`.
   3. Cobrança pendente (`pago: false`) no rateio do tesoureiro em `naprancheta_coletas`.
   4. Marcação de pontualidade em `chegou_em: 'T-50 min (No Horário)'`, habilitando-o para escalação tática (`src/App.tsx:94-110`, `src/components/SelfOnboardingModal.tsx:61-63`).
+- **RN-OE-05 (Unicidade de Número de Camisa)** 🟢 CONFIRMADO: O número de camisa é estritamente exclusivo por atleta no elenco ativo. O sistema deve validar a existência prévia do número no cadastro e rejeitar números duplicados (validado com o usuário em `questions.md#pergunta-6`).
 
 ---
 

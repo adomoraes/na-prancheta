@@ -131,8 +131,8 @@ const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
 
 ---
 
-## 8. Riscos e Lacunas (🔴 / 🟡)
+## 8. Riscos e Lacunas (🔴 / 🟡 / 🟢)
 
-- 🔴 **LACUNA**: A função `toggleMvp()` não reseta outros atletas que já tenham `foi_mvp === true`. Na interface atual, múltiplos atletas podem receber status de MVP simultaneamente no array, embora o cabeçalho resolva apenas o primeiro encontrado (`find`).
-- 🔴 **LACUNA**: Os campos `cartao_vermelho` e `gols_sofridos` (específico para goleiros) existem no schema de dados de `EventoScout`, mas não contam com interface gráfica de entrada em `ScoutPosJogo.tsx`.
+- 🟢 **CONFIRMADO (Regra Validada)**: O MVP é estritamente exclusivo por jogo. Na refatoração/evolução, a função `toggleMvp()` deve desmarcar automaticamente qualquer atleta com `foi_mvp === true` antes de aplicar ao atleta selecionado.
+- 🟡 **INFERIDO**: Os campos `cartao_vermelho` e `gols_sofridos` existem no schema de dados de `EventoScout`, mas não contam com interface gráfica de entrada em `ScoutPosJogo.tsx`.
 - 🟡 **INFERIDO**: Ausência de validação de coerência entre os gols lançados individualmente e o placar total de gols do jogo contra o adversário.
