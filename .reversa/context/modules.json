@@ -1,0 +1,373 @@
+{
+  "generated_at": "2026-09-18T12:29:50-03:00",
+  "modules": [
+    {
+      "name": "protocolo-vestiario",
+      "path": "src/components/VestiarioTimeline.tsx",
+      "purpose": "Cronograma temporal estrito pré-jogo (T-70, T-50, T-35, T-25), contagem regressiva e Regra Fundamental do Atraso.",
+      "primary_files": [
+        "src/components/VestiarioTimeline.tsx"
+      ],
+      "functions": [
+        {
+          "name": "VestiarioTimeline",
+          "file": "src/components/VestiarioTimeline.tsx",
+          "params": ["evento: Evento"],
+          "returns": "JSX.Element",
+          "confidence": "confirmed"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Evento",
+          "fields": [
+            { "name": "id", "type": "string", "required": true },
+            { "name": "titulo", "type": "string", "required": true },
+            { "name": "data_hora", "type": "string", "required": true },
+            { "name": "horario_vestiario_t50", "type": "string", "required": true },
+            { "name": "horario_prelecao_t35", "type": "string", "required": false },
+            { "name": "horario_aquecimento_t25", "type": "string", "required": false }
+          ],
+          "confidence": "confirmed"
+        }
+      ],
+      "business_rules": [
+        {
+          "description": "Atleta que não estiver no vestiário com uniforme e calçado trocados até T-35 min inicia compulsoriamente no banco de reservas.",
+          "location": "src/components/VestiarioTimeline.tsx:76-80",
+          "confidence": "confirmed"
+        },
+        {
+          "description": "Aquecimento neuromuscular obrigatório de campo em 4 fases: Ativação, Mobilidade, Dinâmica e Técnica.",
+          "location": "src/components/VestiarioTimeline.tsx:182-199",
+          "confidence": "confirmed"
+        }
+      ],
+      "dependencies": [],
+      "algorithms": [
+        "Contagem regressiva viva e derivação de badges de marcos pré-jogo (T-50, T-35, T-25)"
+      ],
+      "complexity": "medium"
+    },
+    {
+      "name": "confirmacao-presenca",
+      "path": "src/components/MatchCardConfirmacao.tsx",
+      "purpose": "Ficha do confronto com dados de logística e confirmação de presença expressa em 1 toque (Vou, Não Vou, Dúvida).",
+      "primary_files": [
+        "src/components/MatchCardConfirmacao.tsx"
+      ],
+      "functions": [
+        {
+          "name": "MatchCardConfirmacao",
+          "file": "src/components/MatchCardConfirmacao.tsx",
+          "params": [
+            "evento: Evento",
+            "presencas: EventoPresenca[]",
+            "onUpdatePresenca: (atletaId: string, status: StatusConfirmacao) => void",
+            "currentAtletaId: string"
+          ],
+          "returns": "JSX.Element",
+          "confidence": "confirmed"
+        }
+      ],
+      "entities": [
+        {
+          "name": "EventoPresenca",
+          "fields": [
+            { "name": "id", "type": "string", "required": true },
+            { "name": "evento_id", "type": "string", "required": true },
+            { "name": "atleta_id", "type": "string", "required": true },
+            { "name": "status", "type": "StatusConfirmacao", "required": true },
+            { "name": "respondido_em", "type": "string", "required": true }
+          ],
+          "confidence": "confirmed"
+        }
+      ],
+      "business_rules": [
+        {
+          "description": "Botões de confirmação de presença devem ter altura mínima de 52px para uso mobile com 1 toque.",
+          "location": "src/components/MatchCardConfirmacao.tsx:146",
+          "confidence": "confirmed"
+        },
+        {
+          "description": "Exibir indicação Atrasou (Banco) nos atletas que possuem registro de atraso.",
+          "location": "src/components/MatchCardConfirmacao.tsx:253-256",
+          "confidence": "confirmed"
+        }
+      ],
+      "dependencies": ["protocolo-vestiario"],
+      "algorithms": [
+        "Agregação em tempo real de confirmados, dúvidas e recusas"
+      ],
+      "complexity": "medium"
+    },
+    {
+      "name": "prancheta-tatica",
+      "path": "src/components/PranchetaTecnica.tsx",
+      "purpose": "Escalação tática 4-3-3 visual no campo, gestão de titulares/reservas, trava de atraso T-35 e liberação de preleção.",
+      "primary_files": [
+        "src/components/PranchetaTecnica.tsx"
+      ],
+      "functions": [
+        {
+          "name": "toggleTitular",
+          "file": "src/components/PranchetaTecnica.tsx",
+          "params": ["atleta: Atleta"],
+          "returns": "void",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "handleDivulgar",
+          "file": "src/components/PranchetaTecnica.tsx",
+          "params": [],
+          "returns": "void",
+          "confidence": "confirmed"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Atleta",
+          "fields": [
+            { "name": "id", "type": "string", "required": true },
+            { "name": "nome", "type": "string", "required": true },
+            { "name": "numero_camisa", "type": "number", "required": false },
+            { "name": "posicao_principal", "type": "string", "required": true },
+            { "name": "chegou_em", "type": "string", "required": false }
+          ],
+          "confidence": "confirmed"
+        }
+      ],
+      "business_rules": [
+        {
+          "description": "Trava de Atraso T-35: Atletas com atraso registrado não podem ser escalados entre os 11 titulares.",
+          "location": "src/components/PranchetaTecnica.tsx:41-46",
+          "confidence": "confirmed"
+        },
+        {
+          "description": "Limite máximo estrito de 11 atletas na lista de titulares.",
+          "location": "src/components/PranchetaTecnica.tsx:51-54",
+          "confidence": "confirmed"
+        }
+      ],
+      "dependencies": ["confirmacao-presenca", "protocolo-vestiario"],
+      "algorithms": [
+        "Filtro de confirmados e distribuição tática posicional 4-3-3 no canvas de campo"
+      ],
+      "complexity": "medium"
+    },
+    {
+      "name": "tesoureiro-vaquinha",
+      "path": "src/components/TesoureiroColeta.tsx",
+      "purpose": "Gestão de arrecadação da taxa de jogo e arbitragem, alternância rápida pago/pendente e resumo formatado para WhatsApp.",
+      "primary_files": [
+        "src/components/TesoureiroColeta.tsx"
+      ],
+      "functions": [
+        {
+          "name": "handleCopyPix",
+          "file": "src/components/TesoureiroColeta.tsx",
+          "params": [],
+          "returns": "void",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "handleCopyResumoWhatsApp",
+          "file": "src/components/TesoureiroColeta.tsx",
+          "params": [],
+          "returns": "void",
+          "confidence": "confirmed"
+        }
+      ],
+      "entities": [
+        {
+          "name": "EventoColetaDia",
+          "fields": [
+            { "name": "id", "type": "string", "required": true },
+            { "name": "evento_id", "type": "string", "required": true },
+            { "name": "atleta_id", "type": "string", "required": true },
+            { "name": "valor_pago", "type": "number", "required": true },
+            { "name": "pago", "type": "boolean", "required": true },
+            { "name": "pago_em", "type": "string", "required": false }
+          ],
+          "confidence": "confirmed"
+        }
+      ],
+      "business_rules": [
+        {
+          "description": "Apenas atletas com presença confirmada no jogo participam do rateio financeiro da taxa.",
+          "location": "src/components/TesoureiroColeta.tsx:23-27",
+          "confidence": "confirmed"
+        },
+        {
+          "description": "Meta padrão de arbitragem fixada em R$ 300,00 para acompanhamento de cobertura.",
+          "location": "src/components/TesoureiroColeta.tsx:38-39",
+          "confidence": "confirmed"
+        }
+      ],
+      "dependencies": ["confirmacao-presenca"],
+      "algorithms": [
+        "Cálculo de arrecadação proporcional, montagem e cópia de resumo formatado com emojis para WhatsApp"
+      ],
+      "complexity": "medium"
+    },
+    {
+      "name": "scout-pos-jogo",
+      "path": "src/components/ScoutPosJogo.tsx",
+      "purpose": "Registro expresso pós-partida de scouts quantitativos (gols, assistências, minutagem, cartões) e eleição do Craque do Jogo (MVP).",
+      "primary_files": [
+        "src/components/ScoutPosJogo.tsx"
+      ],
+      "functions": [
+        {
+          "name": "updateField",
+          "file": "src/components/ScoutPosJogo.tsx",
+          "params": ["field: keyof EventoScout", "delta: number"],
+          "returns": "void",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "toggleMvp",
+          "file": "src/components/ScoutPosJogo.tsx",
+          "params": [],
+          "returns": "void",
+          "confidence": "confirmed"
+        }
+      ],
+      "entities": [
+        {
+          "name": "EventoScout",
+          "fields": [
+            { "name": "id", "type": "string", "required": true },
+            { "name": "evento_id", "type": "string", "required": true },
+            { "name": "atleta_id", "type": "string", "required": true },
+            { "name": "minutos_jogados", "type": "number", "required": true },
+            { "name": "gols", "type": "number", "required": true },
+            { "name": "assistencias", "type": "number", "required": true },
+            { "name": "cartao_amarelo", "type": "number", "required": true },
+            { "name": "cartao_vermelho", "type": "number", "required": true },
+            { "name": "foi_mvp", "type": "boolean", "required": true },
+            { "name": "gols_sofridos", "type": "number", "required": true }
+          ],
+          "confidence": "confirmed"
+        }
+      ],
+      "business_rules": [
+        {
+          "description": "Contadores numéricos de scout não podem assumir valores negativos (val < 0).",
+          "location": "src/components/ScoutPosJogo.tsx:45",
+          "confidence": "confirmed"
+        },
+        {
+          "description": "Apenas 1 atleta por partida pode deter o título de Craque do Jogo (MVP).",
+          "location": "src/components/ScoutPosJogo.tsx:50-54",
+          "confidence": "confirmed"
+        }
+      ],
+      "dependencies": ["confirmacao-presenca"],
+      "algorithms": [
+        "Agregação de gols e assistências do time em tempo real e controle incremental de métricas"
+      ],
+      "complexity": "low"
+    },
+    {
+      "name": "almoxarifado-patrimonio",
+      "path": "src/components/AlmoxarifadoView.tsx",
+      "purpose": "Inventário de patrimônio esportivo e checklist de fechamento de malas como trava obrigatória para liberação da resenha social.",
+      "primary_files": [
+        "src/components/AlmoxarifadoView.tsx"
+      ],
+      "functions": [
+        {
+          "name": "AlmoxarifadoView",
+          "file": "src/components/AlmoxarifadoView.tsx",
+          "params": ["itens: PatrimonioItem[]", "evento: Evento"],
+          "returns": "JSX.Element",
+          "confidence": "confirmed"
+        }
+      ],
+      "entities": [
+        {
+          "name": "PatrimonioItem",
+          "fields": [
+            { "name": "id", "type": "string", "required": true },
+            { "name": "nome", "type": "string", "required": true },
+            { "name": "categoria", "type": "string", "required": true },
+            { "name": "quantidade_total", "type": "number", "required": true },
+            { "name": "quantidade_disponivel", "type": "number", "required": true },
+            { "name": "estado_conservacao", "type": "EstadoItem", "required": true }
+          ],
+          "confidence": "confirmed"
+        }
+      ],
+      "business_rules": [
+        {
+          "description": "Regra de Ouro do Vestiário: A resenha social e bebidas só são liberadas após conferência de todas as camisas desviradas, bolas e mala fechada.",
+          "location": "src/components/AlmoxarifadoView.tsx:43-51",
+          "confidence": "confirmed"
+        },
+        {
+          "description": "Obrigatoriedade de desvirar camisas do avesso antes de depositar na mala de lavagem.",
+          "location": "src/components/AlmoxarifadoView.tsx:68-70",
+          "confidence": "confirmed"
+        }
+      ],
+      "dependencies": [],
+      "algorithms": [
+        "Algoritmo booleano de validação tríplice (malaConferida && uniformesLadoCorreto && bolasRecolhidas) para liberação da resenha"
+      ],
+      "complexity": "low"
+    },
+    {
+      "name": "onboarding-elenco",
+      "path": "src/components/SelfOnboardingModal.tsx",
+      "purpose": "Cadastro autônomo e imediato de atletas no elenco com tamanhos de fardamento e posições táticas.",
+      "primary_files": [
+        "src/components/SelfOnboardingModal.tsx"
+      ],
+      "functions": [
+        {
+          "name": "handleSubmit",
+          "file": "src/components/SelfOnboardingModal.tsx",
+          "params": ["e: React.FormEvent"],
+          "returns": "void",
+          "confidence": "confirmed"
+        }
+      ],
+      "entities": [
+        {
+          "name": "Atleta",
+          "fields": [
+            { "name": "id", "type": "string", "required": true },
+            { "name": "nome", "type": "string", "required": true },
+            { "name": "apelido", "type": "string", "required": false },
+            { "name": "telefone", "type": "string", "required": false },
+            { "name": "posicao_principal", "type": "string", "required": true },
+            { "name": "posicao_secundaria", "type": "string", "required": false },
+            { "name": "numero_camisa", "type": "number", "required": false },
+            { "name": "tipo_vinculo", "type": "TipoVinculo", "required": true },
+            { "name": "tamanho_camisa", "type": "string", "required": true },
+            { "name": "tamanho_calcao", "type": "string", "required": true }
+          ],
+          "confidence": "confirmed"
+        }
+      ],
+      "business_rules": [
+        {
+          "description": "Validação de campo obrigatório para o nome completo do atleta.",
+          "location": "src/components/SelfOnboardingModal.tsx:42-45",
+          "confidence": "confirmed"
+        },
+        {
+          "description": "Ao cadastrar novo atleta, adicionar automaticamente presença confirmada e registro de taxa de jogo em aberto.",
+          "location": "src/App.tsx:132-159",
+          "confidence": "confirmed"
+        }
+      ],
+      "dependencies": [],
+      "algorithms": [
+        "Geração de ID via timestamp e injeção em cascata nos estados de presença e cobrança do evento ativo"
+      ],
+      "complexity": "low"
+    }
+  ]
+}

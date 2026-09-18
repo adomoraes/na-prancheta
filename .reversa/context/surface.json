@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-09-18T12:23:00-03:00",
+  "project_root": "/home/adomoraes/projects/na-prancheta",
+  "languages": [
+    { "name": "TypeScript", "extensions": [".ts", ".tsx"], "file_count": 13 },
+    { "name": "JSON", "extensions": [".json"], "file_count": 3 },
+    { "name": "HTML", "extensions": [".html"], "file_count": 1 },
+    { "name": "CSS", "extensions": [".css"], "file_count": 1 },
+    { "name": "Markdown", "extensions": [".md"], "file_count": 2 }
+  ],
+  "primary_language": "TypeScript",
+  "frameworks": [
+    { "name": "React", "version": "19.0.1", "source": "package.json" },
+    { "name": "React-DOM", "version": "19.0.1", "source": "package.json" },
+    { "name": "Vite", "version": "6.2.3", "source": "package.json" },
+    { "name": "TailwindCSS", "version": "4.1.14", "source": "package.json" },
+    { "name": "Motion", "version": "12.23.24", "source": "package.json" },
+    { "name": "Google GenAI SDK", "version": "2.4.0", "source": "package.json" },
+    { "name": "Lucide React", "version": "0.546.0", "source": "package.json" },
+    { "name": "Express", "version": "4.21.2", "source": "package.json" }
+  ],
+  "package_manager": "npm",
+  "entry_points": [
+    { "path": "index.html", "type": "html_entry" },
+    { "path": "src/main.tsx", "type": "react_bootstrap" },
+    { "path": "src/App.tsx", "type": "app_entry" }
+  ],
+  "config_files": [
+    "vite.config.ts",
+    "tsconfig.json",
+    ".env.example",
+    "package.json",
+    "metadata.json"
+  ],
+  "ci_cd": [],
+  "database_hints": [
+    { "path": "src/data/initialData.ts", "type": "in_memory_fallback" },
+    { "path": "localStorage (naprancheta_*)", "type": "browser_local_storage" }
+  ],
+  "test_framework": null,
+  "test_file_count": 0,
+  "modules": [
+    "protocolo-vestiario",
+    "confirmacao-presenca",
+    "prancheta-tatica",
+    "tesoureiro-vaquinha",
+    "scout-pos-jogo",
+    "almoxarifado-patrimonio",
+    "onboarding-elenco"
+  ],
+  "total_files": 21,
+  "organization_suggestion": {
+    "granularity": "feature",
+    "rationale": "Aplicação SPA em React com componentes organizados por funcionalidade em src/components/ sem roteamento centralizado ou subpastas de domínio.",
+    "signals": [
+      {
+        "type": "component_driven_features",
+        "evidence": [
+          "src/components/VestiarioTimeline.tsx",
+          "src/components/MatchCardConfirmacao.tsx",
+          "src/components/PranchetaTecnica.tsx",
+          "src/components/TesoureiroColeta.tsx",
+          "src/components/ScoutPosJogo.tsx",
+          "src/components/AlmoxarifadoView.tsx",
+          "src/components/SelfOnboardingModal.tsx"
+        ]
+      }
+    ],
+    "features": [
+      "protocolo-vestiario",
+      "confirmacao-presenca",
+      "prancheta-tatica",
+      "tesoureiro-vaquinha",
+      "scout-pos-jogo",
+      "almoxarifado-patrimonio",
+      "onboarding-elenco"
+    ]
+  }
+}
