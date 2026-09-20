@@ -1,6 +1,6 @@
 import React from 'react';
 import { NivelAcesso } from '../types';
-import { Shield, Clock, Users, DollarSign, Package, UserPlus } from 'lucide-react';
+import { Shield, Clock, Users, DollarSign, Package, UserPlus, Download } from 'lucide-react';
 
 interface HeaderProps {
   nivelAcesso: NivelAcesso;
@@ -9,6 +9,8 @@ interface HeaderProps {
   isTesoureiroDia: boolean;
   setIsTesoureiroDia: (val: boolean) => void;
   apiConnected?: boolean;
+  canInstallPwa?: boolean;
+  onInstallPwa?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   isTesoureiroDia,
   setIsTesoureiroDia,
   apiConnected = true,
+  canInstallPwa = false,
+  onInstallPwa,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 text-zinc-100 px-4 py-3 shadow-sm">
@@ -123,6 +127,17 @@ export const Header: React.FC<HeaderProps> = ({
             <Package className="w-3.5 h-3.5" />
             <span>Almoxarifado</span>
           </button>
+
+          {canInstallPwa && onInstallPwa && (
+            <button
+              onClick={onInstallPwa}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition active:scale-95 whitespace-nowrap"
+              title="Instalar Na Prancheta no seu dispositivo"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Instalar</span>
+            </button>
+          )}
 
           <button
             onClick={onOpenOnboarding}

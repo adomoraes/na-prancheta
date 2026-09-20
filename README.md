@@ -53,6 +53,12 @@ O projeto conta com rastreabilidade total e especificações executáveis gerada
 ### 7. 👤 Self-Onboarding do Elenco
 - Cadastro facilitado de novos atletas (mensalistas ou convidados) com número de camisa único, posições primária e secundária.
 
+### 8. 📱 Progressive Web App (PWA) & Operação Offline
+- **Instalabilidade Autônoma:** Instalação em 1 toque na tela inicial no Android, iOS (Safari) e Desktop, sem barras de navegador.
+- **Resiliência Offline:** Shell da aplicação e fontes armazenadas em cache pelo Service Worker (Workbox). Permite registrar presença, montar escalação e preencher súmula mesmo em vestiários subterrâneos ou campos sem sinal 4G/5G.
+- **Notificação de Atualização:** Toast interativo que avisa discretamente quando uma nova versão do app estiver disponível para recarga imediata.
+- **Indicador de Conectividade:** Alerta contextual na barra de status informando se a operação atual está em modo offline com dados locais preservados.
+
 ---
 
 ## 🏗️ Arquitetura & Stack Tecnológica
@@ -160,7 +166,13 @@ php artisan config:clear --ansi && php artisan test
 - `PT-005`: Almoxarifado, tríplice conferência de materiais e destravamento da resenha.
 - `PT-006`: Scout estatístico e exclusividade de eleição de MVP.
 
-Para validar o build de produção do frontend:
+Para validar a conformidade e os assets do Progressive Web App (PWA):
+
+```bash
+node scripts/verify-pwa.mjs
+```
+
+Para validar o build de produção do frontend (compilação TypeScript e Service Worker):
 
 ```bash
 npm run build

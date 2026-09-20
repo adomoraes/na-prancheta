@@ -17,9 +17,12 @@ import { PranchetaTecnica } from './components/PranchetaTecnica';
 import { ScoutPosJogo } from './components/ScoutPosJogo';
 import { AlmoxarifadoView } from './components/AlmoxarifadoView';
 import { SelfOnboardingModal } from './components/SelfOnboardingModal';
+import { PwaPrompt } from './components/PwaPrompt';
+import { usePwa } from './hooks/usePwa';
 import { Calendar, Shield, DollarSign, Trophy, Package, Users } from 'lucide-react';
 
 export default function App() {
+  const pwaState = usePwa();
   const [nivelAcesso, setNivelAcesso] = useState<NivelAcesso>('atleta');
   const [isTesoureiroDia, setIsTesoureiroDia] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'>('jogo');
@@ -316,6 +319,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+      {/* PWA Manager (Toast de Atualizacao, Banner de Instalacao e Indicador Offline) */}
+      <PwaPrompt pwaState={pwaState} />
+
       {/* Header com Papéis */}
       <Header
         nivelAcesso={nivelAcesso}
@@ -324,6 +330,8 @@ export default function App() {
         isTesoureiroDia={isTesoureiroDia}
         setIsTesoureiroDia={setIsTesoureiroDia}
         apiConnected={apiConnected}
+        canInstallPwa={pwaState.isInstallable && !pwaState.isInstalled}
+        onInstallPwa={pwaState.promptInstall}
       />
 
       {/* Conteúdo Principal */}

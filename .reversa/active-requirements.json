@@ -1,0 +1,16 @@
+{
+  "schema-version": 1,
+  "feature-dir": "_reversa_forward/001-implementar-pwa",
+  "feature-id": "001",
+  "short-name": "implementar-pwa",
+  "started-at": "2026-09-20T16:48:00Z",
+  "current-stage": "done",
+  "stages-completed": [
+    "requirements",
+    "clarify",
+    "plan",
+    "to-do",
+    "coding"
+  ],
+  "paused-features": []
+}
