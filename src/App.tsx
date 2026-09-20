@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { NivelAcesso, Atleta, Evento, EventoPresenca, EventoColetaDia, EventoScout, PatrimonioItem, StatusConfirmacao } from './types';
+import {
+  NivelAcesso,
+  Atleta,
+  Evento,
+  EventoPresenca,
+  EventoColetaDia,
+  EventoScout,
+  PatrimonioItem,
+  StatusConfirmacao,
+} from './types';
 import {
   ATLETAS_INICIAIS,
   EVENTO_PRINCIPAL,
@@ -17,14 +26,17 @@ import { PranchetaTecnica } from './components/PranchetaTecnica';
 import { ScoutPosJogo } from './components/ScoutPosJogo';
 import { AlmoxarifadoView } from './components/AlmoxarifadoView';
 import { SelfOnboardingModal } from './components/SelfOnboardingModal';
+import { AcessoRestrito } from './components/AcessoRestrito';
+import { LoginModal } from './components/auth/LoginModal';
 import { PwaPrompt } from './components/PwaPrompt';
 import { usePwa } from './hooks/usePwa';
-import { Calendar, Shield, DollarSign, Trophy, Package, Users } from 'lucide-react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Calendar, Shield, DollarSign, Trophy, Package, Lock } from 'lucide-react';
 
-export default function App() {
+function AppContent() {
   const pwaState = usePwa();
-  const [nivelAcesso, setNivelAcesso] = useState<NivelAcesso>('atleta');
-  const [isTesoureiroDia, setIsTesoureiroDia] = useState<boolean>(false);
+  const { user, activeRole, canAccessTab, isLoginModalOpen, closeLoginModal } = useAuth();
+
   const [activeTab, setActiveTab] = useState<'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'>('jogo');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [apiConnected, setApiConnected] = useState<boolean>(false);
@@ -58,6 +70,19 @@ export default function App() {
   const [patrimonio] = useState<PatrimonioItem[]>(PATRIMONIO_INICIAL);
   const [titularesIds, setTitularesIds] = useState<string[]>([]);
   const [conferenciaMala, setConferenciaMala] = useState<any>(null);
+
+  // Redirecionamento inteligente ao alternar/autenticar com papel
+  useEffect(() => {
+    if (activeRole === 'tecnico') {
+      setActiveTab('tatica');
+    } else if (activeRole === 'financeiro') {
+      setActiveTab('financeiro');
+    } else if (activeRole === 'almoxarifado') {
+      setActiveTab('almoxarifado');
+    } else if (activeRole === 'atleta') {
+      setActiveTab('jogo');
+    }
+  }, [activeRole]);
 
   // Hidratação via API REST Laravel 11 com fallback gracioso
   useEffect(() => {
@@ -112,24 +137,12 @@ export default function App() {
     localStorage.setItem('naprancheta_scout', JSON.stringify(scoutList));
   }, [scoutList]);
 
-  // Ao mudar de perfil, direcionar intuitivamente para a aba correspondente
-  const handleSetNivelAcesso = (nivel: NivelAcesso) => {
-    setNivelAcesso(nivel);
-    if (nivel === 'tecnico') {
-      setActiveTab('tatica');
-    } else if (nivel === 'financeiro') {
-      setActiveTab('financeiro');
-    } else if (nivel === 'almoxarifado') {
-      setActiveTab('almoxarifado');
-    } else {
-      setActiveTab('jogo');
-    }
-  };
-
-  // Atleta logado atual (determinado por apelido ou fallback seguro)
-  const currentAtletaId = isTesoureiroDia
-    ? (atletas.find((a) => a.apelido === 'Thiaguinho' || a.id === 'atl-5')?.id || atletas[4]?.id || 'atl-5')
-    : (atletas.find((a) => a.apelido === 'Lucão' || a.id === 'atl-1')?.id || atletas[0]?.id || 'atl-1');
+  // Atleta logado atual (vinculado ao usuário autenticado ou fallback)
+  const currentAtletaId =
+    user?.atleta?.id ||
+    atletas.find((a) => a.nome === user?.name || a.apelido === user?.name)?.id ||
+    (activeRole === 'financeiro' ? atletas[4]?.id : atletas[0]?.id) ||
+    'atl-1';
 
   // Handlers assíncronos com sincronização na API Laravel 11
   const handleUpdatePresenca = async (atletaId: string, status: StatusConfirmacao) => {
@@ -201,91 +214,99 @@ export default function App() {
           assistencias: updated.assistencias,
           cartoes_amarelos: updated.cartao_amarelo,
           cartoes_vermelhos: updated.cartao_vermelho,
-          gols_sofridos_goleiro: updated.gols_sofridos,
-          minutos_jogados: updated.minutos_jogados,
           foi_mvp: updated.foi_mvp,
+          minutos_jogados: updated.minutos_jogados,
+          gols_sofridos_goleiro: updated.gols_sofridos,
         });
       }
     } catch (e) {
-      console.error('Erro ao salvar scout na API:', e);
+      console.error('Erro ao atualizar scout na API:', e);
     }
   };
 
-  const handleAddAtleta = async (novoAtleta: Atleta) => {
-    setAtletas((prev) => [...prev, novoAtleta]);
+  const handleAddAtleta = async (novo: Atleta) => {
+    setAtletas((prev) => [...prev, novo]);
 
-    // Adiciona presença padrão
     setPresencas((prev) => [
       ...prev,
       {
-        id: `pres-${novoAtleta.id}`,
+        id: `pres-${Date.now()}`,
         evento_id: evento.id,
-        atleta_id: novoAtleta.id,
+        atleta_id: novo.id,
         status: 'confirmado',
         respondido_em: new Date().toISOString(),
-        atleta: novoAtleta,
+        eh_titular: false,
+        criado_em: new Date().toISOString(),
+        atleta: novo,
       },
     ]);
 
-    // Adiciona coleta padrão
     setColetas((prev) => [
       ...prev,
       {
-        id: `col-${novoAtleta.id}`,
+        id: `col-${Date.now()}`,
         evento_id: evento.id,
-        atleta_id: novoAtleta.id,
+        atleta_id: novo.id,
         valor_pago: evento.valor_taxa_jogo,
         pago: false,
       },
     ]);
 
+    setScoutList((prev) => [
+      ...prev,
+      {
+        id: `scout-${Date.now()}`,
+        evento_id: evento.id,
+        atleta_id: novo.id,
+        minutos_jogados: 0,
+        gols: 0,
+        assistencias: 0,
+        cartao_amarelo: 0,
+        cartao_vermelho: 0,
+        foi_mvp: false,
+        gols_sofridos: 0,
+      },
+    ]);
+
     try {
       if (apiConnected) {
-        await api.createAtleta({
-          nome: novoAtleta.nome,
-          apelido: novoAtleta.apelido || novoAtleta.nome.split(' ')[0],
-          numero_camisa: novoAtleta.numero_camisa || Math.floor(Math.random() * 80 + 20),
-          posicao_principal: novoAtleta.posicao_principal,
-          posicao_secundaria: novoAtleta.posicao_secundaria,
-          tipo_vinculo: novoAtleta.tipo_vinculo,
+        const backendAtleta = await api.createAtleta({
+          nome: novo.nome,
+          apelido: novo.apelido || novo.nome,
+          numero_camisa: novo.numero_camisa || 99,
+          posicao_principal: novo.posicao_principal,
+          posicao_secundaria: novo.posicao_secundaria,
+          tipo_vinculo: novo.tipo_vinculo,
         });
+
+        await api.updatePresenca(evento.id, backendAtleta.id, 'confirmado');
       }
     } catch (e) {
-      console.error('Erro ao cadastrar atleta na API:', e);
+      console.error('Erro ao persistir novo atleta na API:', e);
     }
   };
 
-  const handleSalvarEscalacao = async (novosTitularesIds: string[]) => {
+  const handleSalvarEscalacao = async (titulares: { atletaId: string; posicaoId: number }[]) => {
+    const novosTitularesIds = titulares.map((t) => t.atletaId);
     setTitularesIds(novosTitularesIds);
-    if (!apiConnected) return;
 
-    const posMap: Record<string, number> = {
-      GOL: 1,
-      LAD: 2,
-      ZAG: 3,
-      LAE: 5,
-      VOL: 6,
-      MC: 7,
-      MEI: 8,
-      PTD: 9,
-      CA: 10,
-      PTE: 11,
-    };
+    setPresencas((prev) =>
+      prev.map((p) => {
+        const tit = titulares.find((t) => t.atletaId === p.atleta_id);
+        return {
+          ...p,
+          eh_titular: !!tit,
+          posicao_escalada: tit ? `Posição ${tit.posicaoId}` : undefined,
+        };
+      })
+    );
 
-    const titularesPayload = novosTitularesIds.map((id, idx) => {
-      const at = atletas.find((a) => a.id === id);
-      const posId = at && posMap[at.posicao_principal] ? posMap[at.posicao_principal] : idx + 1;
-      return {
-        atleta_id: id,
-        posicao_campo_id: posId,
-      };
-    });
-
-    try {
-      await api.salvarEscalacao(evento.id, titularesPayload);
-    } catch (e) {
-      console.error('Erro ao salvar escalação na API:', e);
-      throw e;
+    if (apiConnected) {
+      const payloadTitulares = titulares.map((t) => ({
+        atleta_id: t.atletaId,
+        posicao_campo_id: t.posicaoId,
+      }));
+      await api.salvarEscalacao(evento.id, payloadTitulares);
     }
   };
 
@@ -297,6 +318,12 @@ export default function App() {
     mala_trancada_no_carro: boolean;
   }) => {
     if (!apiConnected) {
+      setConferenciaMala({
+        ...payload,
+        custodiante_id: currentAtletaId,
+        conferido_em: new Date().toISOString(),
+        resenha_liberada: true,
+      });
       return { resenha_liberada: true, message: 'Modo offline: conferência concluída' };
     }
     const res = await api.fecharMalas(evento.id, payload);
@@ -319,16 +346,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
-      {/* PWA Manager (Toast de Atualizacao, Banner de Instalacao e Indicador Offline) */}
+      {/* PWA Manager */}
       <PwaPrompt pwaState={pwaState} />
 
-      {/* Header com Papéis */}
+      {/* Header com Perfil Autenticado & RBAC */}
       <Header
-        nivelAcesso={nivelAcesso}
-        setNivelAcesso={handleSetNivelAcesso}
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
-        isTesoureiroDia={isTesoureiroDia}
-        setIsTesoureiroDia={setIsTesoureiroDia}
         apiConnected={apiConnected}
         canInstallPwa={pwaState.isInstallable && !pwaState.isInstalled}
         onInstallPwa={pwaState.promptInstall}
@@ -336,10 +359,10 @@ export default function App() {
 
       {/* Conteúdo Principal */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 pb-24">
-        {/* Protocolo Oficial de Vestiário (T-50, T-35, T-25) - Sempre Visível como Coração do Clube */}
+        {/* Protocolo Oficial de Vestiário (T-50, T-35, T-25) */}
         <VestiarioTimeline evento={evento} />
 
-        {/* Abas Superiores Mobile & Desktop */}
+        {/* Abas Superiores Mobile & Desktop com Indicadores de Responsabilidade */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none border-b border-zinc-800/80">
           <button
             onClick={() => setActiveTab('jogo')}
@@ -363,6 +386,7 @@ export default function App() {
           >
             <Shield className="w-3.5 h-3.5 text-blue-400" />
             <span>Prancheta Tática (T-35)</span>
+            {!canAccessTab('tatica') && <Lock className="w-3 h-3 text-zinc-500" />}
           </button>
 
           <button
@@ -375,6 +399,7 @@ export default function App() {
           >
             <DollarSign className="w-3.5 h-3.5 text-amber-400" />
             <span>Tesoureiro do Dia</span>
+            {!canAccessTab('financeiro') && <Lock className="w-3 h-3 text-zinc-500" />}
           </button>
 
           <button
@@ -399,10 +424,11 @@ export default function App() {
           >
             <Package className="w-3.5 h-3.5 text-pink-400" />
             <span>Almoxarifado & Malas</span>
+            {!canAccessTab('almoxarifado') && <Lock className="w-3 h-3 text-zinc-500" />}
           </button>
         </div>
 
-        {/* Renderização Condicional da Aba Ativa */}
+        {/* Renderização Condicional com Proteção RBAC */}
         {activeTab === 'jogo' && (
           <MatchCardConfirmacao
             evento={evento}
@@ -412,26 +438,40 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'tatica' && (
-          <PranchetaTecnica
-            evento={evento}
-            atletas={atletas}
-            presencas={presencasComAtletas}
-            titularesIds={titularesIds}
-            onSaveEscalacao={handleSalvarEscalacao}
-            apiConnected={apiConnected}
-          />
-        )}
+        {activeTab === 'tatica' &&
+          (canAccessTab('tatica') ? (
+            <PranchetaTecnica
+              evento={evento}
+              atletas={atletas}
+              presencas={presencasComAtletas}
+              titularesIds={titularesIds}
+              onSaveEscalacao={handleSalvarEscalacao}
+              apiConnected={apiConnected}
+            />
+          ) : (
+            <AcessoRestrito
+              moduloNome="Prancheta Tática 4-3-3"
+              papelNecessario="Comissão Técnica ou Diretoria Geral"
+              onGoBack={() => setActiveTab('jogo')}
+            />
+          ))}
 
-        {activeTab === 'financeiro' && (
-          <TesoureiroColeta
-            evento={evento}
-            coletas={coletas}
-            presencas={presencasComAtletas}
-            onTogglePago={handleTogglePago}
-            onEncerrarVaquinha={handleEncerrarVaquinha}
-          />
-        )}
+        {activeTab === 'financeiro' &&
+          (canAccessTab('financeiro') ? (
+            <TesoureiroColeta
+              evento={evento}
+              coletas={coletas}
+              presencas={presencasComAtletas}
+              onTogglePago={handleTogglePago}
+              onEncerrarVaquinha={handleEncerrarVaquinha}
+            />
+          ) : (
+            <AcessoRestrito
+              moduloNome="Tesoureiro do Dia & Vaquinha PIX"
+              papelNecessario="Tesoureiro do Dia ou Diretoria Geral"
+              onGoBack={() => setActiveTab('jogo')}
+            />
+          ))}
 
         {activeTab === 'scout' && (
           <ScoutPosJogo
@@ -443,14 +483,21 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'almoxarifado' && (
-          <AlmoxarifadoView
-            itens={patrimonio}
-            evento={evento}
-            conferenciaInicial={conferenciaMala}
-            onFecharMalas={handleFecharMalas}
-          />
-        )}
+        {activeTab === 'almoxarifado' &&
+          (canAccessTab('almoxarifado') ? (
+            <AlmoxarifadoView
+              itens={patrimonio}
+              evento={evento}
+              conferenciaInicial={conferenciaMala}
+              onFecharMalas={handleFecharMalas}
+            />
+          ) : (
+            <AcessoRestrito
+              moduloNome="Almoxarifado & Trava da Resenha"
+              papelNecessario="Almoxarifado ou Diretoria Geral"
+              onGoBack={() => setActiveTab('jogo')}
+            />
+          ))}
       </main>
 
       {/* Barra de Navegação Inferior Fixa Mobile (PWA Feel) */}
@@ -512,6 +559,17 @@ export default function App() {
         onClose={() => setIsOnboardingOpen(false)}
         onAddAtleta={handleAddAtleta}
       />
+
+      {/* Modal de Autenticação & Login Google */}
+      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

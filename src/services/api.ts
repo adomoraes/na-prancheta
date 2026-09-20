@@ -38,12 +38,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return data as T;
 }
 
+import { User, AuthResponse } from '../types';
+
 export const api = {
-  // 1. AUTENTICAÇÃO SANCTUM
-  async login(phone: string, password: string = 'na-prancheta-2026') {
-    const data = await request<{ token: string; user: any }>('/auth/login', {
+  // 1. AUTENTICAÇÃO SANCTUM & GOOGLE GIS
+  async login(phoneOrEmail: string, password: string = 'na-prancheta-2026'): Promise<AuthResponse> {
+    const data = await request<AuthResponse>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ phone, password }),
+      body: JSON.stringify({ login: phoneOrEmail, password }),
     });
     if (data.token) {
       localStorage.setItem(TOKEN_KEY, data.token);
@@ -51,12 +53,40 @@ export const api = {
     return data;
   },
 
-  async getMe() {
-    return request<{ user: any }>('/auth/me');
+  async loginGoogle(credential: string): Promise<AuthResponse> {
+    const data = await request<AuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    });
+    if (data.token) {
+      localStorage.setItem(TOKEN_KEY, data.token);
+    }
+    return data;
   },
 
-  logout() {
-    localStorage.removeItem(TOKEN_KEY);
+  async devLogin(role: string): Promise<AuthResponse> {
+    const data = await request<AuthResponse>('/auth/dev-login', {
+      method: 'POST',
+      body: JSON.stringify({ role }),
+    });
+    if (data.token) {
+      localStorage.setItem(TOKEN_KEY, data.token);
+    }
+    return data;
+  },
+
+  async getMe(): Promise<{ user: User }> {
+    return request<{ user: User }>('/auth/me');
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await request('/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignora falha de rede ao deslogar
+    } finally {
+      localStorage.removeItem(TOKEN_KEY);
+    }
   },
 
   // 2. ELENCO & ATLETAS
