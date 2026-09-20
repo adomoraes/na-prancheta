@@ -1,18 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PatrimonioItem, Evento } from '../types';
-import { Package, CheckCircle2, AlertTriangle, ShieldCheck, Shirt, Check, RefreshCw } from 'lucide-react';
+import { Package, CheckCircle2, AlertTriangle, ShieldCheck, Shirt, Check, RefreshCw, Loader2, Lock, Unlock } from 'lucide-react';
 
 interface AlmoxarifadoViewProps {
   itens: PatrimonioItem[];
   evento: Evento;
+  conferenciaInicial?: any;
+  onFecharMalas?: (payload: {
+    camisas_recolhidas: number;
+    todas_camisas_desviradas: boolean;
+    bolas_recolhidas: number;
+    kit_cones_recolhido: boolean;
+    mala_trancada_no_carro: boolean;
+  }) => Promise<any>;
 }
 
-export const AlmoxarifadoView: React.FC<AlmoxarifadoViewProps> = ({ itens, evento }) => {
-  const [malaConferida, setMalaConferida] = useState(false);
-  const [uniformesLadoCorreto, setUniformesLadoCorreto] = useState(false);
-  const [bolasRecolhidas, setBolasRecolhidas] = useState(false);
+export const AlmoxarifadoView: React.FC<AlmoxarifadoViewProps> = ({
+  itens,
+  evento,
+  conferenciaInicial,
+  onFecharMalas,
+}) => {
+  const [malaConferida, setMalaConferida] = useState(
+    !!conferenciaInicial?.mala_trancada_no_carro
+  );
+  const [uniformesLadoCorreto, setUniformesLadoCorreto] = useState(
+    !!conferenciaInicial?.todas_camisas_desviradas
+  );
+  const [bolasRecolhidas, setBolasRecolhidas] = useState(
+    (conferenciaInicial?.bolas_recolhidas || 0) >= 6
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [resenhaLiberadaApi, setResenhaLiberadaApi] = useState(
+    !!conferenciaInicial?.resenha_liberada
+  );
 
-  const tudoConferido = malaConferida && uniformesLadoCorreto && bolasRecolhidas;
+  useEffect(() => {
+    if (conferenciaInicial) {
+      if (conferenciaInicial.mala_trancada_no_carro) setMalaConferida(true);
+      if (conferenciaInicial.todas_camisas_desviradas) setUniformesLadoCorreto(true);
+      if ((conferenciaInicial.bolas_recolhidas || 0) >= 6) setBolasRecolhidas(true);
+      if (conferenciaInicial.resenha_liberada) setResenhaLiberadaApi(true);
+    }
+  }, [conferenciaInicial]);
+
+  const tudoConferido = (malaConferida && uniformesLadoCorreto && bolasRecolhidas) || resenhaLiberadaApi;
+
+  const handleSalvarConferencia = async () => {
+    if (!onFecharMalas) return;
+    try {
+      setIsSaving(true);
+      const res = await onFecharMalas({
+        camisas_recolhidas: uniformesLadoCorreto ? 22 : 0,
+        todas_camisas_desviradas: uniformesLadoCorreto,
+        bolas_recolhidas: bolasRecolhidas ? 6 : 0,
+        kit_cones_recolhido: true,
+        mala_trancada_no_carro: malaConferida,
+      });
+      if (res?.resenha_liberada) {
+        setResenhaLiberadaApi(true);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Erro ao registrar fechamento na API');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-4 sm:p-6 shadow-sm mb-6 text-zinc-100">
@@ -94,15 +147,46 @@ export const AlmoxarifadoView: React.FC<AlmoxarifadoViewProps> = ({ itens, event
           </label>
         </div>
 
-        <div className="mt-3 pt-3 border-t border-zinc-800 flex items-center justify-between">
-          <div className="text-xs">
-            Status da Resenha:{' '}
+        <div className="mt-3 pt-3 border-t border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-xs flex items-center gap-2">
+            <span>Status da Resenha:</span>
             {tudoConferido ? (
-              <span className="font-bold text-emerald-400">LIBERADA ✅</span>
+              <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 flex items-center gap-1.5">
+                <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+                LIBERADA {resenhaLiberadaApi ? '(Sincronizada na API) ✅' : '✅'}
+              </span>
             ) : (
-              <span className="font-bold text-amber-400">BLOQUEADA (Aguardando malas) ⏳</span>
+              <span className="font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                BLOQUEADA (Aguardando malas) ⏳
+              </span>
             )}
           </div>
+
+          {onFecharMalas && (
+            <button
+              onClick={handleSalvarConferencia}
+              disabled={isSaving || !malaConferida || !uniformesLadoCorreto || !bolasRecolhidas}
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Sincronizando...</span>
+                </>
+              ) : resenhaLiberadaApi ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Fechamento Confirmado na API</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Registrar Fechamento Oficial (API)</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

@@ -8,6 +8,7 @@ interface HeaderProps {
   onOpenOnboarding: () => void;
   isTesoureiroDia: boolean;
   setIsTesoureiroDia: (val: boolean) => void;
+  apiConnected?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenOnboarding,
   isTesoureiroDia,
   setIsTesoureiroDia,
+  apiConnected = true,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 text-zinc-100 px-4 py-3 shadow-sm">
@@ -32,7 +34,18 @@ export const Header: React.FC<HeaderProps> = ({
                   Na Prancheta
                 </h1>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  PoC v1.0
+                  Target v2.0
+                </span>
+                <span
+                  className={`text-[9px] font-semibold tracking-wide px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+                    apiConnected
+                      ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
+                      : 'bg-amber-950/40 text-amber-400 border-amber-500/30'
+                  }`}
+                  title={apiConnected ? 'Conectado à API Laravel 11 com PostgreSQL 16' : 'Modo de contingência LocalStorage'}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${apiConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                  {apiConnected ? 'Laravel 11 + PG16' : 'Offline'}
                 </span>
               </div>
               <p className="text-xs text-zinc-400">Gestão Esportiva & Vestiário Amador</p>
