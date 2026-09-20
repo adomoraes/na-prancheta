@@ -18,12 +18,12 @@ hash: "sha256:a9c8d060ba75d2b22c4c501784d7ba34a13b083784d98a4832d09b3b0df519e6"
 ---
 
 ## Pré-requisitos
-- [ ] Backend Laravel 11 instalado e configurado via Docker / Sail com PHP 8.3 e PostgreSQL 16.
-- [ ] 100% das Migrations de banco executadas e validadas (`php artisan migrate:status`).
-- [ ] Seeders de carga inicial (`LegacyInitialDataSeeder`) executados e conferidos contra `src/data/initialData.ts`.
-- [ ] Suíte de testes automatizados do Laravel (`php artisan test`) passando com 100% de sucesso.
-- [ ] Configuração de CORS no Laravel habilitando a URL do frontend React 19 SPA.
-- [ ] Variáveis de ambiente configuradas no frontend (`VITE_API_BASE_URL=http://localhost:8000/api`).
+- [x] Backend Laravel 11 instalado e configurado via Docker / Sail com PHP 8.3 e PostgreSQL 16.
+- [x] 100% das Migrations de banco executadas e validadas (`php artisan migrate:status`).
+- [x] Seeders de carga inicial (`LegacyInitialDataSeeder`) executados e conferidos contra `src/data/initialData.ts`.
+- [x] Suíte de testes automatizados do Laravel (`php artisan test`) passando com 100% de sucesso.
+- [x] Configuração de CORS no Laravel habilitando a URL do frontend React 19 SPA.
+- [x] Variáveis de ambiente configuradas no frontend (`VITE_API_BASE_URL=http://localhost:8000/api`).
 
 ---
 
