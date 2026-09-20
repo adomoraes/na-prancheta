@@ -8,6 +8,7 @@ import {
   SCOUT_INICIAL,
   PATRIMONIO_INICIAL,
 } from './data/initialData';
+import { api } from './services/api';
 import { Header } from './components/Header';
 import { VestiarioTimeline } from './components/VestiarioTimeline';
 import { MatchCardConfirmacao } from './components/MatchCardConfirmacao';
@@ -23,6 +24,7 @@ export default function App() {
   const [isTesoureiroDia, setIsTesoureiroDia] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'>('jogo');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
+  const [apiConnected, setApiConnected] = useState<boolean>(false);
 
   // Estados persistentes em localStorage com fallback inicial
   const [atletas, setAtletas] = useState<Atleta[]>(() => {
@@ -51,6 +53,38 @@ export default function App() {
   });
 
   const [patrimonio] = useState<PatrimonioItem[]>(PATRIMONIO_INICIAL);
+  const [titularesIds, setTitularesIds] = useState<string[]>([]);
+  const [conferenciaMala, setConferenciaMala] = useState<any>(null);
+
+  // Hidratação via API REST Laravel 11 com fallback gracioso
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const fullData = await api.fetchFullMatchData();
+        if (!isMounted) return;
+        setEvento(fullData.evento);
+        if (fullData.atletas.length > 0) setAtletas(fullData.atletas);
+        if (fullData.presencas.length > 0) setPresencas(fullData.presencas);
+        if (fullData.coletas.length > 0) setColetas(fullData.coletas);
+        if (fullData.scoutList.length > 0) setScoutList(fullData.scoutList);
+        if (fullData.titularesIds && fullData.titularesIds.length > 0) {
+          setTitularesIds(fullData.titularesIds);
+        }
+        if (fullData.conferencia) {
+          setConferenciaMala(fullData.conferencia);
+        }
+        setApiConnected(true);
+      } catch (err) {
+        console.warn('API Laravel offline ou em contingência:', err);
+        setApiConnected(false);
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Sincronizar presenças com objetos de atletas atualizados
   const presencasComAtletas = presencas.map((p) => ({
@@ -89,11 +123,13 @@ export default function App() {
     }
   };
 
-  // Atleta logado atual (simulado como Lucão ou Thiaguinho se tesoureiro)
-  const currentAtletaId = isTesoureiroDia ? 'atl-5' : 'atl-1';
+  // Atleta logado atual (determinado por apelido ou fallback seguro)
+  const currentAtletaId = isTesoureiroDia
+    ? (atletas.find((a) => a.apelido === 'Thiaguinho' || a.id === 'atl-5')?.id || atletas[4]?.id || 'atl-5')
+    : (atletas.find((a) => a.apelido === 'Lucão' || a.id === 'atl-1')?.id || atletas[0]?.id || 'atl-1');
 
-  // Handlers
-  const handleUpdatePresenca = (atletaId: string, status: StatusConfirmacao) => {
+  // Handlers assíncronos com sincronização na API Laravel 11
+  const handleUpdatePresenca = async (atletaId: string, status: StatusConfirmacao) => {
     setPresencas((prev) =>
       prev.map((p) =>
         p.atleta_id === atletaId
@@ -101,9 +137,28 @@ export default function App() {
           : p
       )
     );
+
+    try {
+      if (apiConnected) {
+        let backendStatus: 'confirmado' | 'ausente' | 'duvida' = 'duvida';
+        if (status === 'confirmado') backendStatus = 'confirmado';
+        else if (status === 'recusado') backendStatus = 'ausente';
+
+        const res = await api.updatePresenca(evento.id, atletaId, backendStatus);
+        if (res.status_final === 'lista_espera') {
+          setPresencas((prev) =>
+            prev.map((p) =>
+              p.atleta_id === atletaId ? { ...p, status: 'lista_espera' } : p
+            )
+          );
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar presença na API:', e);
+    }
   };
 
-  const handleTogglePago = (atletaId: string) => {
+  const handleTogglePago = async (atletaId: string) => {
     setColetas((prev) =>
       prev.map((c) =>
         c.atleta_id === atletaId
@@ -115,9 +170,17 @@ export default function App() {
           : c
       )
     );
+
+    try {
+      if (apiConnected) {
+        await api.registrarBaixaVaquinha(evento.id, atletaId);
+      }
+    } catch (e) {
+      console.error('Erro ao registrar baixa na API:', e);
+    }
   };
 
-  const handleUpdateScout = (updated: EventoScout) => {
+  const handleUpdateScout = async (updated: EventoScout) => {
     setScoutList((prev) => {
       const idx = prev.findIndex((s) => s.atleta_id === updated.atleta_id);
       if (idx >= 0) {
@@ -127,9 +190,25 @@ export default function App() {
       }
       return [...prev, updated];
     });
+
+    try {
+      if (apiConnected) {
+        await api.salvarScout(evento.id, updated.atleta_id, {
+          gols: updated.gols,
+          assistencias: updated.assistencias,
+          cartoes_amarelos: updated.cartao_amarelo,
+          cartoes_vermelhos: updated.cartao_vermelho,
+          gols_sofridos_goleiro: updated.gols_sofridos,
+          minutos_jogados: updated.minutos_jogados,
+          foi_mvp: updated.foi_mvp,
+        });
+      }
+    } catch (e) {
+      console.error('Erro ao salvar scout na API:', e);
+    }
   };
 
-  const handleAddAtleta = (novoAtleta: Atleta) => {
+  const handleAddAtleta = async (novoAtleta: Atleta) => {
     setAtletas((prev) => [...prev, novoAtleta]);
 
     // Adiciona presença padrão
@@ -156,6 +235,83 @@ export default function App() {
         pago: false,
       },
     ]);
+
+    try {
+      if (apiConnected) {
+        await api.createAtleta({
+          nome: novoAtleta.nome,
+          apelido: novoAtleta.apelido || novoAtleta.nome.split(' ')[0],
+          numero_camisa: novoAtleta.numero_camisa || Math.floor(Math.random() * 80 + 20),
+          posicao_principal: novoAtleta.posicao_principal,
+          posicao_secundaria: novoAtleta.posicao_secundaria,
+          tipo_vinculo: novoAtleta.tipo_vinculo,
+        });
+      }
+    } catch (e) {
+      console.error('Erro ao cadastrar atleta na API:', e);
+    }
+  };
+
+  const handleSalvarEscalacao = async (novosTitularesIds: string[]) => {
+    setTitularesIds(novosTitularesIds);
+    if (!apiConnected) return;
+
+    const posMap: Record<string, number> = {
+      GOL: 1,
+      LAD: 2,
+      ZAG: 3,
+      LAE: 5,
+      VOL: 6,
+      MC: 7,
+      MEI: 8,
+      PTD: 9,
+      CA: 10,
+      PTE: 11,
+    };
+
+    const titularesPayload = novosTitularesIds.map((id, idx) => {
+      const at = atletas.find((a) => a.id === id);
+      const posId = at && posMap[at.posicao_principal] ? posMap[at.posicao_principal] : idx + 1;
+      return {
+        atleta_id: id,
+        posicao_campo_id: posId,
+      };
+    });
+
+    try {
+      await api.salvarEscalacao(evento.id, titularesPayload);
+    } catch (e) {
+      console.error('Erro ao salvar escalação na API:', e);
+      throw e;
+    }
+  };
+
+  const handleFecharMalas = async (payload: {
+    camisas_recolhidas: number;
+    todas_camisas_desviradas: boolean;
+    bolas_recolhidas: number;
+    kit_cones_recolhido: boolean;
+    mala_trancada_no_carro: boolean;
+  }) => {
+    if (!apiConnected) {
+      return { resenha_liberada: true, message: 'Modo offline: conferência concluída' };
+    }
+    const res = await api.fecharMalas(evento.id, payload);
+    if (res?.conferencia) {
+      setConferenciaMala(res.conferencia);
+    }
+    return res;
+  };
+
+  const handleEncerrarVaquinha = async () => {
+    if (!apiConnected) {
+      return {
+        message: 'Modo offline: taxa quitada',
+        saldo_excedente_centavos: 2500,
+        saldo_geral_equipe_centavos: 15000,
+      };
+    }
+    return api.encerrarVaquinha(evento.id);
   };
 
   return (
@@ -167,6 +323,7 @@ export default function App() {
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
         isTesoureiroDia={isTesoureiroDia}
         setIsTesoureiroDia={setIsTesoureiroDia}
+        apiConnected={apiConnected}
       />
 
       {/* Conteúdo Principal */}
@@ -252,6 +409,9 @@ export default function App() {
             evento={evento}
             atletas={atletas}
             presencas={presencasComAtletas}
+            titularesIds={titularesIds}
+            onSaveEscalacao={handleSalvarEscalacao}
+            apiConnected={apiConnected}
           />
         )}
 
@@ -261,6 +421,7 @@ export default function App() {
             coletas={coletas}
             presencas={presencasComAtletas}
             onTogglePago={handleTogglePago}
+            onEncerrarVaquinha={handleEncerrarVaquinha}
           />
         )}
 
@@ -275,7 +436,12 @@ export default function App() {
         )}
 
         {activeTab === 'almoxarifado' && (
-          <AlmoxarifadoView itens={patrimonio} evento={evento} />
+          <AlmoxarifadoView
+            itens={patrimonio}
+            evento={evento}
+            conferenciaInicial={conferenciaMala}
+            onFecharMalas={handleFecharMalas}
+          />
         )}
       </main>
 

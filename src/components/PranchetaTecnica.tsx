@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Evento, Atleta, EventoPresenca } from '../types';
-import { Shield, AlertTriangle, Users, Share2, Sparkles, Check, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Shield, AlertTriangle, Users, Share2, Sparkles, Check, ChevronDown, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface PranchetaTecnicaProps {
   evento: Evento;
   atletas: Atleta[];
   presencas: EventoPresenca[];
+  titularesIds?: string[];
+  onSaveEscalacao?: (titularesIds: string[]) => Promise<void>;
+  apiConnected?: boolean;
 }
 
 export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
   evento,
   atletas,
   presencas,
+  titularesIds: initialTitularesIds,
+  onSaveEscalacao,
+  apiConnected = true,
 }) => {
   // Confirmados
   const confirmadosIds = new Set(
@@ -19,24 +25,25 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
   );
   const atletasConfirmados = atletas.filter((a) => confirmadosIds.has(a.id));
 
-  // Titulares padrão (primeiros 11 que não estão atrasados)
-  const [titularesIds, setTitularesIds] = useState<string[]>([
-    'atl-1', // Lucão Goleiro
-    'atl-3', // Felipinho LD
-    'atl-2', // Digão ZAG
-    'atl-4', // Biel ZAG
-    'atl-5', // Thiaguinho LE
-    'atl-6', // Danilão VOL
-    'atl-7', // Bruninho MC
-    'atl-8', // Deco MEI
-    'atl-9', // Rafinha PD
-    'atl-10', // Theus CA
-    'atl-11', // Guga PE
-  ]);
+  // Titulares padrão (primeiros 11 que não estão atrasados ou vindos da API)
+  const [titularesIds, setTitularesIds] = useState<string[]>(() => {
+    if (initialTitularesIds && initialTitularesIds.length > 0) return initialTitularesIds;
+    return atletasConfirmados
+      .filter((a) => !a.chegou_em?.includes('Atrasado'))
+      .slice(0, 11)
+      .map((a) => a.id);
+  });
+
+  useEffect(() => {
+    if (initialTitularesIds && initialTitularesIds.length > 0) {
+      setTitularesIds(initialTitularesIds);
+    }
+  }, [initialTitularesIds]);
 
   const [notifiedPrelecao, setNotifiedPrelecao] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const toggleTitular = (atleta: Atleta) => {
+  const toggleTitular = async (atleta: Atleta) => {
     // Verificar regra do atraso!
     if (atleta.chegou_em?.includes('Atrasado')) {
       alert(
@@ -45,23 +52,38 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
       return;
     }
 
+    let nextIds: string[];
     if (titularesIds.includes(atleta.id)) {
-      setTitularesIds(titularesIds.filter((id) => id !== atleta.id));
+      nextIds = titularesIds.filter((id) => id !== atleta.id);
     } else {
       if (titularesIds.length >= 11) {
         alert('Limite de 11 titulares atingido. Remova um titular antes de adicionar outro.');
         return;
       }
-      setTitularesIds([...titularesIds, atleta.id]);
+      nextIds = [...titularesIds, atleta.id];
+    }
+    setTitularesIds(nextIds);
+    if (onSaveEscalacao) {
+      onSaveEscalacao(nextIds).catch((err) => console.warn('Sync escalação background:', err));
     }
   };
 
   const titulares = atletasConfirmados.filter((a) => titularesIds.includes(a.id));
   const reservas = atletasConfirmados.filter((a) => !titularesIds.includes(a.id));
 
-  const handleDivulgar = () => {
-    setNotifiedPrelecao(true);
-    setTimeout(() => setNotifiedPrelecao(false), 3000);
+  const handleDivulgar = async () => {
+    try {
+      setIsSaving(true);
+      if (onSaveEscalacao) {
+        await onSaveEscalacao(titularesIds);
+      }
+      setNotifiedPrelecao(true);
+      setTimeout(() => setNotifiedPrelecao(false), 3000);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao sincronizar escalação na API');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -84,9 +106,15 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
 
         <button
           onClick={handleDivulgar}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98]"
+          disabled={isSaving}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-50"
         >
-          {notifiedPrelecao ? (
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Sincronizando com API...</span>
+            </>
+          ) : notifiedPrelecao ? (
             <>
               <CheckCircle2 className="w-4 h-4 text-emerald-300" />
               <span>Escalação Liberada no Vestiário!</span>

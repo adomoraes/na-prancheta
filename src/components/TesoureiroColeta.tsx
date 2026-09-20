@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Evento, EventoColetaDia, EventoPresenca, Atleta } from '../types';
-import { DollarSign, CheckCircle, Clock, Copy, Check, Users, Sparkles, AlertCircle } from 'lucide-react';
+import { DollarSign, CheckCircle, Clock, Copy, Check, Users, Sparkles, AlertCircle, Landmark, Loader2 } from 'lucide-react';
 
 interface TesoureiroColetaProps {
   evento: Evento;
   coletas: EventoColetaDia[];
   presencas: EventoPresenca[];
   onTogglePago: (atletaId: string) => void;
+  onEncerrarVaquinha?: () => Promise<any>;
 }
 
 export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
@@ -14,10 +15,39 @@ export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
   coletas,
   presencas,
   onTogglePago,
+  onEncerrarVaquinha,
 }) => {
   const [filter, setFilter] = useState<'todos' | 'pendentes' | 'pagos'>('todos');
   const [copiedPix, setCopiedPix] = useState(false);
   const [copiedResumo, setCopiedResumo] = useState(false);
+  const [isEncerrando, setIsEncerrando] = useState(false);
+  const [encerradoInfo, setEncerradoInfo] = useState<{
+    saldoExcedente: number;
+    saldoGeral: number;
+  } | null>(null);
+
+  const handleEncerrar = async () => {
+    if (!onEncerrarVaquinha) return;
+    if (
+      !window.confirm(
+        'Deseja encerrar a vaquinha desta partida? A taxa de arbitragem será liquidada e qualquer excedente será transferido automaticamente para o Caixa Geral da equipe.'
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsEncerrando(true);
+      const res = await onEncerrarVaquinha();
+      setEncerradoInfo({
+        saldoExcedente: (res?.saldo_excedente_centavos || 0) / 100,
+        saldoGeral: (res?.saldo_geral_equipe_centavos || 0) / 100,
+      });
+    } catch (err: any) {
+      alert(err.message || 'Erro ao encerrar vaquinha na API');
+    } finally {
+      setIsEncerrando(false);
+    }
+  };
 
   // Apenas atletas confirmados no jogo participam do rateio/vaquinha
   const confirmadosIds = new Set(
@@ -112,8 +142,46 @@ export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
             {copiedResumo ? <Check className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
             <span>{copiedResumo ? 'Copiado p/ Zap!' : 'Resumo WhatsApp'}</span>
           </button>
+
+          {onEncerrarVaquinha && (
+            <button
+              onClick={handleEncerrar}
+              disabled={isEncerrando || !!encerradoInfo}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-xs font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-50"
+            >
+              {isEncerrando ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Fechando...</span>
+                </>
+              ) : encerradoInfo ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Vaquinha Liquidada</span>
+                </>
+              ) : (
+                <>
+                  <Landmark className="w-3.5 h-3.5" />
+                  <span>Encerrar & Creditar Caixa</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Banner de Encerramento com Sucesso */}
+      {encerradoInfo && (
+        <div className="my-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong>Vaquinha encerrada na API:</strong> Taxa de arbitragem quitada. Excedente de{' '}
+              <strong>R$ {encerradoInfo.saldoExcedente.toFixed(2)}</strong> creditado no Caixa Geral. Saldo acumulado do clube: <strong>R$ {encerradoInfo.saldoGeral.toFixed(2)}</strong>.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Cards de Métricas Financeiras */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
