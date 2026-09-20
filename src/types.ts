@@ -93,3 +93,25 @@ export interface EventoColetaDia {
   pago: boolean;
   pago_em?: string;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  role: NivelAcesso;
+  avatar_url?: string;
+  atleta?: {
+    id: string;
+    nome: string;
+    apelido?: string;
+    numero_camisa?: number;
+    posicao_principal?: string;
+  } | null;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+

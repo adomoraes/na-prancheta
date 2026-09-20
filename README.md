@@ -97,7 +97,28 @@ O projeto conta com rastreabilidade total e especificações executáveis gerada
 
 ---
 
-### 1. Inicializando o Backend (Laravel 11)
+### ⚡ Inicialização Rápida (Comando Único Recomendado)
+
+Para subir todos os serviços (PostgreSQL no Docker, Backend Laravel 11 e Frontend React 19) com um único comando:
+
+```bash
+npm start
+# ou
+./start.sh
+```
+
+O script realiza automaticamente:
+1. Verificação de dependências do ambiente (Node, npm, PHP, Composer, Docker).
+2. Inicialização do container PostgreSQL 16 via Docker Compose (se não estiver rodando).
+3. Preparação do backend (criação do `.env` se ausente, instalação de dependências e migrations).
+4. Inicialização paralela da API Laravel (`http://localhost:8000/api`) e do Frontend (`http://localhost:3000`).
+5. Encerramento limpo de todos os processos ao pressionar `Ctrl+C`.
+
+---
+
+### Inicialização Manual por Etapas (Opcional)
+
+#### 1. Inicializando o Backend (Laravel 11)
 
 ```bash
 # Navegue até a pasta do backend
