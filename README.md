@@ -64,12 +64,13 @@ O projeto conta com rastreabilidade total e especificações executáveis gerada
 
 ### 8. 👑 Painel Administrativo Master (ROOT Backoffice)
 - **Dashboard Isolada:** Interface administrativa em Dark Mode (Zinc 950) desacoplada do fluxo da partida, acessível pelo botão "Painel Admin" no cabeçalho exclusivo para o usuário `root`.
-- **5 Módulos de CRUD Mestre:**
+- **6 Módulos de CRUD Mestre:**
   1. **Usuários & Perfis:** Criação, edição, alteração de papéis, redefinição de senhas com revogação forçada de tokens e exclusão de contas.
   2. **Elenco & Atletas (Soft Delete & Numeração de Calçado):** Cadastro e manutenção de atletas com exclusão lógica (`ativo: false`), número de calçado esportivo (25 a 50), posições e vínculos, garantindo preservação de scouts históricos e presenças passadas.
   3. **Partidas & Vestiário:** Agendamento de jogos com cálculo automatizado dos horários regulamentares de vestiário (T-50, T-35 e T-25) e alteração de status (`agendada`, `em_andamento`, `encerrada`, `cancelada`).
-  4. **Caixa Geral do Clube:** Extrato financeiro consolidado de entradas e saídas administrativas com cálculo de saldo em tempo real.
-  5. **Patrimônio & Almoxarifado:** Inventário de bens esportivos (bolas, coletes, redes, cones) com estado de conservação e quantidade total.
+  4. **Locais & Campos:** Gestão de arenas, sedes e quadras esportivas com geolocalização (Google Maps/Waze), tipos de piso, observações de acesso e preenchimento automático no formulário de partidas mantendo snapshot imutável.
+  5. **Caixa Geral do Clube:** Extrato financeiro consolidado de entradas e saídas administrativas com cálculo de saldo em tempo real.
+  6. **Patrimônio & Almoxarifado:** Inventário de bens esportivos (bolas, coletes, redes, cones) com estado de conservação e quantidade total.
 - **Endpoints Exclusivos:** Rotas sob `/api/admin/*` protegidas por middleware estrito `role:root`.
 
 ### 9. 📱 Progressive Web App (PWA) & Operação Offline
@@ -201,7 +202,14 @@ cd backend
 php artisan config:clear --ansi && php artisan test
 ```
 
-### Cobertura da Suíte (39 Testes Passando, 173 Asserções):
+### Cobertura da Suíte (45 Testes Passando, 203 Asserções):
+- **`LocalCrudTest` (6 testes):**
+  - Rejeição 401 para requisições anônimas em `/api/admin/locais`.
+  - Rejeição 403 para usuários sem perfil `root`.
+  - CRUD completo de locais pelo superusuário ROOT (criação, edição e alternância de status ativo/inativo).
+  - Validação de unicidade de nome do local por clube (`time_id`) com rejeição 422.
+  - Listagem pública `/api/locais` filtrando estritamente registros ativos.
+  - Agendamento de partida vinculada a `local_id` com relacionamento Eloquent e preservação de snapshot.
 - **`AtletaCalcadoTest` (5 testes):**
   - Persistência e leitura do número de calçado esportivo (ex.: 41).
   - Persistência com valor nulo para atletas sem calçado informado.

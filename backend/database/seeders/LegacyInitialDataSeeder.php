@@ -104,12 +104,45 @@ class LegacyInitialDataSeeder extends Seeder
                 );
             }
 
+            // 3.1 LOCAIS & CAMPOS
+            $localPrincipalId = '22222222-2222-2222-2222-222222222222';
+            DB::table('locais')->updateOrInsert(
+                ['id' => $localPrincipalId],
+                [
+                    'time_id' => $timeId,
+                    'nome' => 'Arena Soccer Ville — Campo 1 Oficial',
+                    'endereco' => 'Av. do Futebol, 1000 - São Paulo/SP',
+                    'maps_url' => 'https://maps.google.com/?q=Arena+Soccer+Ville',
+                    'tipo_piso' => 'Grama Sintética',
+                    'observacoes' => 'Campo coberto com vestiários amplos e estacionamento.',
+                    'ativo' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+            $localSecundarioId = '22222222-2222-2222-2222-333333333333';
+            DB::table('locais')->updateOrInsert(
+                ['id' => $localSecundarioId],
+                [
+                    'time_id' => $timeId,
+                    'nome' => 'Playball Pompeia — Campo Society 2',
+                    'endereco' => 'Rua Nicholas Boer, 120 - Pompeia, São Paulo/SP',
+                    'maps_url' => 'https://maps.google.com/?q=Playball+Pompeia',
+                    'tipo_piso' => 'Society',
+                    'observacoes' => 'Área de churrasqueira e bar no local.',
+                    'ativo' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+
             // 4. PARTIDA PRINCIPAL
             $partidaId = '33333333-3333-3333-3333-333333333333';
             DB::table('partidas')->updateOrInsert(
                 ['id' => $partidaId],
                 [
                     'time_id' => $timeId,
+                    'local_id' => $localPrincipalId,
                     'adversario' => 'União Alvinegra F.C.',
                     'data_partida' => now()->addDays(2)->format('Y-m-d'),
                     'horario_inicio' => '10:00:00',

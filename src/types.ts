@@ -153,6 +153,7 @@ export interface AdminAtletaDTO {
 
 export interface AdminPartidaDTO {
   id: string;
+  local_id?: string | null;
   adversario: string;
   data_partida: string;
   horario_inicio: string;
@@ -166,6 +167,20 @@ export interface AdminPartidaDTO {
   chave_pix_cobranca?: string | null;
   status: 'agendada' | 'em_andamento' | 'encerrada' | 'cancelada';
 }
+
+export interface Local {
+  id: string;
+  nome: string;
+  endereco: string;
+  maps_url?: string | null;
+  tipo_piso: string;
+  observacoes?: string | null;
+  ativo: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type AdminLocalDTO = Local;
 
 export interface AdminCaixaMovimentacaoDTO {
   id: string;

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AlmoxarifadoController;
 use App\Http\Controllers\Api\AtletaController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EscalacaoController;
+use App\Http\Controllers\Api\LocalController;
 use App\Http\Controllers\Api\PartidaController;
 use App\Http\Controllers\Api\PresencaController;
 use App\Http\Controllers\Api\ScoutController;
@@ -26,6 +27,9 @@ Route::prefix('auth')->group(function () {
 // 2. ELENCO & ATLETAS (Leitura pública, cadastro autenticado)
 Route::get('/atletas', [AtletaController::class, 'index']);
 Route::post('/atletas', [AtletaController::class, 'store'])->middleware('auth:sanctum');
+
+// 2.1 LOCAIS & CAMPOS (Leitura pública)
+Route::get('/locais', [LocalController::class, 'index']);
 
 // 3. PARTIDAS & VESTIÁRIO
 Route::prefix('partidas/{id}')->group(function () {
@@ -88,4 +92,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:root'])->group(functio
     Route::post('/patrimonio', [AdminController::class, 'storePatrimonio']);
     Route::put('/patrimonio/{id}', [AdminController::class, 'updatePatrimonio']);
     Route::delete('/patrimonio/{id}', [AdminController::class, 'deletePatrimonio']);
+
+    // 4.6 Locais & Campos da Partida
+    Route::get('/locais', [AdminController::class, 'indexLocais']);
+    Route::post('/locais', [AdminController::class, 'storeLocal']);
+    Route::put('/locais/{id}', [AdminController::class, 'updateLocal']);
+    Route::patch('/locais/{id}/status', [AdminController::class, 'toggleLocalStatus']);
 });
