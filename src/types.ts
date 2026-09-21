@@ -221,8 +221,14 @@ export interface AdminPatrimonioDTO {
   id: string;
   nome: string;
   categoria: string;
+  tipo_uniforme?: 'camisa' | 'meiao' | 'calcao' | string | null;
   quantidade_total: number;
+  tamanho?: string | null;
+  cor?: string | null;
+  numero?: string | null;
   estado_conservacao: 'novo' | 'bom' | 'regular' | 'desgastado';
+  observacoes?: string | null;
   ativo?: boolean;
 }
+
 

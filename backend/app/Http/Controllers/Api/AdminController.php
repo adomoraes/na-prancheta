@@ -416,12 +416,25 @@ class AdminController extends Controller
 
     public function storePatrimonio(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $rules = [
             'nome' => 'required|string|max:255',
             'categoria' => 'required|string|max:100',
             'quantidade_total' => 'required|integer|min:0',
             'estado_conservacao' => 'required|string|in:novo,bom,regular,desgastado',
-        ]);
+            'tipo_uniforme' => 'nullable|string|in:camisa,meiao,calcao',
+            'tamanho' => 'nullable|string|max:20',
+            'cor' => 'nullable|string|max:50',
+            'numero' => 'nullable|string|max:10',
+            'observacoes' => 'nullable|string|max:500',
+        ];
+
+        $categoriaLower = strtolower(trim($request->input('categoria', '')));
+        if (in_array($categoriaLower, ['uniforme', 'uniformes', 'fardamento'])) {
+            $rules['tipo_uniforme'] = 'required|string|in:camisa,meiao,calcao';
+            $rules['quantidade_total'] = 'required|integer|min:1';
+        }
+
+        $validated = $request->validate($rules);
 
         $time = Time::first();
 
@@ -430,8 +443,13 @@ class AdminController extends Controller
             'time_id' => $time?->id,
             'nome' => $validated['nome'],
             'categoria' => $validated['categoria'],
+            'tipo_uniforme' => $validated['tipo_uniforme'] ?? null,
             'quantidade_total' => $validated['quantidade_total'],
+            'tamanho' => $validated['tamanho'] ?? null,
+            'cor' => $validated['cor'] ?? null,
+            'numero' => $validated['numero'] ?? null,
             'estado_conservacao' => $validated['estado_conservacao'],
+            'observacoes' => $validated['observacoes'] ?? null,
             'ativo' => true,
         ]);
 
@@ -445,13 +463,26 @@ class AdminController extends Controller
     {
         $item = ItemAlmoxarifado::findOrFail($id);
 
-        $validated = $request->validate([
+        $rules = [
             'nome' => 'sometimes|required|string|max:255',
             'categoria' => 'sometimes|required|string|max:100',
+            'tipo_uniforme' => 'nullable|string|in:camisa,meiao,calcao',
             'quantidade_total' => 'sometimes|required|integer|min:0',
+            'tamanho' => 'nullable|string|max:20',
+            'cor' => 'nullable|string|max:50',
+            'numero' => 'nullable|string|max:10',
             'estado_conservacao' => 'sometimes|required|string|in:novo,bom,regular,desgastado',
+            'observacoes' => 'nullable|string|max:500',
             'ativo' => 'sometimes|boolean',
-        ]);
+        ];
+
+        $categoria = $request->input('categoria', $item->categoria);
+        $categoriaLower = strtolower(trim($categoria));
+        if (in_array($categoriaLower, ['uniforme', 'uniformes', 'fardamento']) && $request->has('tipo_uniforme')) {
+            $rules['tipo_uniforme'] = 'required|string|in:camisa,meiao,calcao';
+        }
+
+        $validated = $request->validate($rules);
 
         $item->update($validated);
 

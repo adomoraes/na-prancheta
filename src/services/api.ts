@@ -502,8 +502,13 @@ export const api = {
     async createPatrimonio(payload: {
       nome: string;
       categoria: string;
+      tipo_uniforme?: string;
       quantidade_total: number;
+      tamanho?: string;
+      cor?: string;
+      numero?: string;
       estado_conservacao: string;
+      observacoes?: string;
     }) {
       return request<{ message: string; item: AdminPatrimonioDTO }>('/admin/patrimonio', {
         method: 'POST',

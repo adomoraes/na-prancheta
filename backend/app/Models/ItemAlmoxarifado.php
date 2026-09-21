@@ -20,8 +20,13 @@ class ItemAlmoxarifado extends Model
         'time_id',
         'nome',
         'categoria',
+        'tipo_uniforme',
         'quantidade_total',
+        'tamanho',
+        'cor',
+        'numero',
         'estado_conservacao',
+        'observacoes',
         'ativo',
     ];
 

@@ -203,7 +203,13 @@ cd backend
 php artisan config:clear --ansi && php artisan test
 ```
 
-### Cobertura da Suíte (51 Testes Passando, 233 Asserções):
+### Cobertura da Suíte (57 Testes Passando, 264 Asserções):
+- **`PatrimonioUniformeTest` (6 testes):**
+  - Criação de item comum de patrimônio sem obrigatoriedade de campos de uniforme.
+  - Validação condicional que exige `tipo_uniforme` válido (`camisa`, `meiao`, `calcao`) quando a categoria for `uniforme` ou `uniformes`.
+  - Persistência e integridade de todos os atributos (`tipo_uniforme`, `tamanho`, `cor`, `numero`, `observacoes`) e campos de quantidade (`quantidade`, `quantidade_disponivel`).
+  - Suporte completo aos tipos `meiao` e `calcao`.
+  - Atualização cadastral de itens de uniforme via PUT no painel administrativo preservando atributos.
 - **`AdversarioCrudTest` (6 testes):**
   - Rejeição 401 para requisições anônimas em `/api/admin/adversarios`.
   - Rejeição 403 para usuários sem perfil `root`.
