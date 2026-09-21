@@ -24,6 +24,7 @@ interface HeaderProps {
   onInstallPwa?: () => void;
   currentView?: 'match' | 'admin';
   onToggleAdminView?: () => void;
+  onGoToLanding?: () => void;
 }
 
 const ROLE_CONFIG: Record<
@@ -69,6 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
   onInstallPwa,
   currentView = 'match',
   onToggleAdminView,
+  onGoToLanding,
 }) => {
   const { user, isAuthenticated, activeRole, setActiveRole, logout, openLoginModal } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -166,6 +168,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Settings2 className="w-3.5 h-3.5" />
               <span>{currentView === 'admin' ? 'Ver Jogo' : 'Painel Admin'}</span>
+            </button>
+          )}
+
+          {/* Botão de Retorno para a Vitrine Comercial & Investidores */}
+          {onGoToLanding && (
+            <button
+              onClick={onGoToLanding}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-xs font-semibold transition active:scale-95 shadow-sm"
+              title="Voltar para a Landing Page Comercial & Tese para Investidores"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden md:inline">Vitrine Comercial</span>
+              <span className="md:hidden">Vitrine</span>
             </button>
           )}
 

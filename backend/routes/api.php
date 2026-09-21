@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AlmoxarifadoController;
 use App\Http\Controllers\Api\AtletaController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EscalacaoController;
+use App\Http\Controllers\Api\InvestorLeadController;
 use App\Http\Controllers\Api\LocalController;
 use App\Http\Controllers\Api\PartidaController;
 use App\Http\Controllers\Api\PresencaController;
@@ -115,4 +116,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:root'])->group(functio
     Route::post('/scouts', [AdminController::class, 'storeScout']);
     Route::put('/scouts/{id}', [AdminController::class, 'updateScout']);
     Route::delete('/scouts/{id}', [AdminController::class, 'deleteScout']);
+
+    // 4.9 Leads de Investidores & Parcerias
+    Route::get('/leads/investor', [InvestorLeadController::class, 'index']);
 });
+
+// 5. LEADS COMERCIAIS & INVESTIDORES (Landing Page Pública)
+Route::post('/leads/investor', [InvestorLeadController::class, 'store'])->middleware('throttle:10,1');
+
