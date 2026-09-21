@@ -235,12 +235,60 @@ class LegacyInitialDataSeeder extends Seeder
                 );
             }
 
-            // 6. ITENS DO ALMOXARIFADO
+            // 6. ITENS DO ALMOXARIFADO & UNIFORMES
             $itens = [
-                ['id' => '00000000-0000-0000-0006-000000000001', 'time_id' => $timeId, 'nome' => 'Mala 1 — Fardamento Principal (Branco/Verde)', 'categoria' => 'uniforme', 'quantidade_total' => 22, 'estado_conservacao' => 'bom'],
-                ['id' => '00000000-0000-0000-0006-000000000002', 'time_id' => $timeId, 'nome' => 'Mala 2 — Fardamento Reserva (Azul Marinho)', 'categoria' => 'uniforme', 'quantidade_total' => 22, 'estado_conservacao' => 'excelente'],
-                ['id' => '00000000-0000-0000-0006-000000000003', 'time_id' => $timeId, 'nome' => 'Bolsão com 6 Bolas Oficiais Penalty Campo', 'categoria' => 'bola', 'quantidade_total' => 6, 'estado_conservacao' => 'bom'],
-                ['id' => '00000000-0000-0000-0006-000000000004', 'time_id' => $timeId, 'nome' => 'Kit Aquecimento (Cones e Pratos)', 'categoria' => 'treino_cones', 'quantidade_total' => 1, 'estado_conservacao' => 'bom'],
+                [
+                    'id' => '00000000-0000-0000-0006-000000000001',
+                    'time_id' => $timeId,
+                    'nome' => 'Mala 1 — Jogo de Camisas Titulares',
+                    'categoria' => 'uniforme',
+                    'tipo_uniforme' => 'camisa',
+                    'quantidade_total' => 22,
+                    'tamanho' => 'G',
+                    'cor' => 'Verde e Branco',
+                    'numero' => null,
+                    'estado_conservacao' => 'bom',
+                    'observacoes' => 'Mala completa 22 camisas numeradas',
+                ],
+                [
+                    'id' => '00000000-0000-0000-0006-000000000002',
+                    'time_id' => $timeId,
+                    'nome' => 'Camisa 10 Titular Manga Longa',
+                    'categoria' => 'uniforme',
+                    'tipo_uniforme' => 'camisa',
+                    'quantidade_total' => 1,
+                    'tamanho' => 'GG',
+                    'cor' => 'Azul',
+                    'numero' => '10',
+                    'estado_conservacao' => 'novo',
+                    'observacoes' => 'Adidas',
+                ],
+                [
+                    'id' => '00000000-0000-0000-0006-000000000003',
+                    'time_id' => $timeId,
+                    'nome' => 'Bolsão com 6 Bolas Oficiais Penalty Campo',
+                    'categoria' => 'bola',
+                    'tipo_uniforme' => null,
+                    'quantidade_total' => 6,
+                    'tamanho' => null,
+                    'cor' => null,
+                    'numero' => null,
+                    'estado_conservacao' => 'bom',
+                    'observacoes' => 'Bolas calibradas 11 lbs',
+                ],
+                [
+                    'id' => '00000000-0000-0000-0006-000000000004',
+                    'time_id' => $timeId,
+                    'nome' => 'Kit Aquecimento (Cones e Pratos)',
+                    'categoria' => 'treino_cones',
+                    'tipo_uniforme' => null,
+                    'quantidade_total' => 1,
+                    'tamanho' => null,
+                    'cor' => null,
+                    'numero' => null,
+                    'estado_conservacao' => 'bom',
+                    'observacoes' => '12 cones e 20 pratinhos',
+                ],
             ];
             foreach ($itens as $item) {
                 DB::table('itens_almoxarifado')->updateOrInsert(['id' => $item['id']], $item);

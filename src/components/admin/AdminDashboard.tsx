@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Swords,
   Phone,
+  Shirt,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import {
@@ -102,13 +103,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     descricao: '',
   });
 
+  const [patrimonioCategoriaFilter, setPatrimonioCategoriaFilter] = useState<string>('todos');
   const [modalPatrimonioOpen, setModalPatrimonioOpen] = useState(false);
   const [editingPatrimonio, setEditingPatrimonio] = useState<AdminPatrimonioDTO | null>(null);
   const [patrimonioForm, setPatrimonioForm] = useState({
     nome: '',
-    categoria: 'bola',
+    categoria: 'uniforme',
+    tipo_uniforme: 'camisa' as 'camisa' | 'meiao' | 'calcao',
     quantidade_total: 1,
+    tamanho: 'GG',
+    cor: 'Azul',
+    numero: '10',
     estado_conservacao: 'novo' as 'novo' | 'bom' | 'regular' | 'desgastado',
+    observacoes: 'Adidas',
   });
 
   const [modalLocalOpen, setModalLocalOpen] = useState(false);
@@ -352,22 +359,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
   const handleSavePatrimonio = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const isUniforme = ['uniforme', 'uniformes', 'fardamento'].includes(patrimonioForm.categoria.toLowerCase());
+      
+      const payload = {
+        nome: patrimonioForm.nome.trim() || (isUniforme
+          ? `${patrimonioForm.tipo_uniforme === 'meiao' ? 'Meião' : patrimonioForm.tipo_uniforme === 'calcao' ? 'Calção' : 'Camisa'}${patrimonioForm.numero ? ' #' + patrimonioForm.numero : ''} ${patrimonioForm.cor || ''}`.trim()
+          : 'Novo Item'),
+        categoria: patrimonioForm.categoria,
+        tipo_uniforme: isUniforme ? patrimonioForm.tipo_uniforme : undefined,
+        quantidade_total: Number(patrimonioForm.quantidade_total),
+        tamanho: isUniforme ? (patrimonioForm.tamanho || undefined) : undefined,
+        cor: isUniforme ? (patrimonioForm.cor || undefined) : undefined,
+        numero: isUniforme ? (patrimonioForm.numero || undefined) : undefined,
+        estado_conservacao: patrimonioForm.estado_conservacao,
+        observacoes: patrimonioForm.observacoes || undefined,
+      };
+
       if (editingPatrimonio) {
-        await api.admin.updatePatrimonio(editingPatrimonio.id, {
-          nome: patrimonioForm.nome,
-          categoria: patrimonioForm.categoria,
-          quantidade_total: Number(patrimonioForm.quantidade_total),
-          estado_conservacao: patrimonioForm.estado_conservacao,
-        });
+        await api.admin.updatePatrimonio(editingPatrimonio.id, payload);
         showToast('Item atualizado com sucesso.');
       } else {
-        await api.admin.createPatrimonio({
-          nome: patrimonioForm.nome,
-          categoria: patrimonioForm.categoria,
-          quantidade_total: Number(patrimonioForm.quantidade_total),
-          estado_conservacao: patrimonioForm.estado_conservacao,
-        });
-        showToast('Item adicionado ao patrimônio.');
+        await api.admin.createPatrimonio(payload);
+        showToast('Item adicionado ao patrimônio com sucesso.');
       }
       setModalPatrimonioOpen(false);
       loadData('patrimonio');
@@ -1344,82 +1357,208 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         {activeTab === 'patrimonio' && (
           <div className="mt-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/60 p-3.5 rounded-2xl border border-zinc-800">
-              <h2 className="text-xs font-bold text-zinc-300">Inventário de Bens do Clube</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-zinc-300 mr-2">Filtrar por:</span>
+                {[
+                  { id: 'todos', label: 'Todos', count: patrimonio.length },
+                  {
+                    id: 'uniforme',
+                    label: '👕 Uniformes',
+                    count: patrimonio.filter((p) =>
+                      ['uniforme', 'uniformes', 'fardamento'].includes(p.categoria.toLowerCase())
+                    ).length,
+                  },
+                  {
+                    id: 'bola',
+                    label: '⚽ Bolas',
+                    count: patrimonio.filter((p) => p.categoria.toLowerCase().includes('bola')).length,
+                  },
+                  {
+                    id: 'colete',
+                    label: '🎽 Coletes',
+                    count: patrimonio.filter((p) => p.categoria.toLowerCase().includes('colete')).length,
+                  },
+                  {
+                    id: 'outros',
+                    label: '📦 Apoio / Outros',
+                    count: patrimonio.filter(
+                      (p) =>
+                        !['uniforme', 'uniformes', 'fardamento'].includes(p.categoria.toLowerCase()) &&
+                        !p.categoria.toLowerCase().includes('bola') &&
+                        !p.categoria.toLowerCase().includes('colete')
+                    ).length,
+                  },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setPatrimonioCategoriaFilter(f.id)}
+                    className={`px-3 py-1 rounded-xl text-xs font-semibold transition border ${
+                      patrimonioCategoriaFilter === f.id
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700/60 hover:text-zinc-200'
+                    }`}
+                  >
+                    {f.label} <span className="opacity-70 text-[10px]">({f.count})</span>
+                  </button>
+                ))}
+              </div>
+
               <button
                 onClick={() => {
                   setEditingPatrimonio(null);
                   setPatrimonioForm({
                     nome: '',
-                    categoria: 'bola',
+                    categoria: 'uniforme',
+                    tipo_uniforme: 'camisa',
                     quantidade_total: 1,
+                    tamanho: 'GG',
+                    cor: 'Azul',
+                    numero: '10',
                     estado_conservacao: 'novo',
+                    observacoes: 'Adidas',
                   });
                   setModalPatrimonioOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0"
               >
                 <Plus className="w-4 h-4" />
-                <span>Adicionar Bem</span>
+                <span>Adicionar Bem / Uniforme</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-              {patrimonio.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between shadow-sm"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-md">
-                        {item.categoria}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          item.estado_conservacao === 'novo'
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                            : item.estado_conservacao === 'bom'
-                            ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-                            : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                        }`}
-                      >
-                        {item.estado_conservacao.toUpperCase()}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-sm text-zinc-100">{item.nome}</h3>
-                    <p className="text-2xl font-black text-emerald-400 mt-2">
-                      {item.quantidade_total}{' '}
-                      <span className="text-xs font-normal text-zinc-500">unidades no clube</span>
-                    </p>
-                  </div>
+              {patrimonio
+                .filter((item) => {
+                  if (patrimonioCategoriaFilter === 'todos') return true;
+                  const cat = item.categoria.toLowerCase();
+                  if (patrimonioCategoriaFilter === 'uniforme') {
+                    return ['uniforme', 'uniformes', 'fardamento'].includes(cat);
+                  }
+                  if (patrimonioCategoriaFilter === 'bola') {
+                    return cat.includes('bola');
+                  }
+                  if (patrimonioCategoriaFilter === 'colete') {
+                    return cat.includes('colete');
+                  }
+                  if (patrimonioCategoriaFilter === 'outros') {
+                    return (
+                      !['uniforme', 'uniformes', 'fardamento'].includes(cat) &&
+                      !cat.includes('bola') &&
+                      !cat.includes('colete')
+                    );
+                  }
+                  return true;
+                })
+                .map((item) => {
+                  const isUniforme = ['uniforme', 'uniformes', 'fardamento'].includes(
+                    item.categoria.toLowerCase()
+                  );
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between shadow-sm hover:border-zinc-700 transition"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] uppercase font-bold text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-md">
+                              {item.categoria}
+                            </span>
+                            {isUniforme && item.tipo_uniforme && (
+                              <span className="text-[10px] uppercase font-bold text-blue-400 bg-blue-950/60 border border-blue-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <Shirt className="w-3 h-3 text-blue-400 shrink-0" />
+                                {item.tipo_uniforme === 'calcao' ? 'CALÇÃO' : item.tipo_uniforme === 'meiao' ? 'MEIÃO' : 'CAMISA'}
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              item.estado_conservacao === 'novo'
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                : item.estado_conservacao === 'bom'
+                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                                : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                            }`}
+                          >
+                            {item.estado_conservacao.toUpperCase()}
+                          </span>
+                        </div>
 
-                  <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => {
-                        setEditingPatrimonio(item);
-                        setPatrimonioForm({
-                          nome: item.nome,
-                          categoria: item.categoria,
-                          quantidade_total: item.quantidade_total,
-                          estado_conservacao: item.estado_conservacao,
-                        });
-                        setModalPatrimonioOpen(true);
-                      }}
-                      className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition"
-                      title="Editar"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeletePatrimonio(item)}
-                      className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400 transition"
-                      title="Excluir"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                        <h3 className="font-bold text-sm text-zinc-100 flex items-center justify-between">
+                          <span>{item.nome}</span>
+                          {isUniforme && item.numero && (
+                            <span className="text-xs font-black px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              #{item.numero}
+                            </span>
+                          )}
+                        </h3>
+
+                        {/* Detalhes específicos de Uniforme */}
+                        {isUniforme && (
+                          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                            {item.tamanho && (
+                              <span className="text-[10px] font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md border border-zinc-700">
+                                Tam: {item.tamanho}
+                              </span>
+                            )}
+                            {item.cor && (
+                              <span className="text-[10px] font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md border border-zinc-700">
+                                Cor: {item.cor}
+                              </span>
+                            )}
+                            {item.observacoes && (
+                              <span className="text-[10px] font-medium bg-zinc-950 text-zinc-400 px-2 py-0.5 rounded-md border border-zinc-800 italic">
+                                {item.observacoes}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {!isUniforme && item.observacoes && (
+                          <p className="text-[11px] text-zinc-500 mt-2 italic bg-zinc-950/60 p-2 rounded-lg border border-zinc-800/80">
+                            "{item.observacoes}"
+                          </p>
+                        )}
+
+                        <p className="text-2xl font-black text-emerald-400 mt-3">
+                          {item.quantidade_total}{' '}
+                          <span className="text-xs font-normal text-zinc-500">unidades no clube</span>
+                        </p>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingPatrimonio(item);
+                            setPatrimonioForm({
+                              nome: item.nome,
+                              categoria: item.categoria,
+                              tipo_uniforme: (item.tipo_uniforme as any) || 'camisa',
+                              quantidade_total: item.quantidade_total,
+                              tamanho: item.tamanho || 'GG',
+                              cor: item.cor || 'Azul',
+                              numero: item.numero || '10',
+                              estado_conservacao: item.estado_conservacao,
+                              observacoes: item.observacoes || '',
+                            });
+                            setModalPatrimonioOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition"
+                          title="Editar"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePatrimonio(item)}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400 transition"
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
@@ -1956,59 +2095,324 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         </div>
       )}
 
-      {/* Modal Patrimônio */}
+      {/* Modal Patrimônio & Fardamento Refatorado com Steps e Condicional Reativa */}
       {modalPatrimonioOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-in fade-in zoom-in-95">
-            <h3 className="font-bold text-sm text-zinc-100 mb-4">
-              {editingPatrimonio ? 'Editar Item de Patrimônio' : 'Adicionar Bem ao Almoxarifado'}
-            </h3>
-            <form onSubmit={handleSavePatrimonio} className="space-y-3">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-5 shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
+              <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-2">
+                <Shirt className="w-4 h-4 text-emerald-400" />
+                <span>
+                  {editingPatrimonio
+                    ? 'Editar Item de Patrimônio'
+                    : 'Adicionar Bem / Fardamento ao Almoxarifado'}
+                </span>
+              </h3>
+              <button
+                onClick={() => setModalPatrimonioOpen(false)}
+                className="text-zinc-500 hover:text-zinc-300 p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePatrimonio} className="space-y-4">
+              {/* STEP 1: CATEGORIA DO ITEM */}
               <div>
-                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Nome do Bem</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                  1. Selecione a Categoria do Material
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'uniforme', label: '👕 Uniformes', sub: 'Camisas, calções, meiões' },
+                    { id: 'bola', label: '⚽ Bolas', sub: 'Oficiais e treino' },
+                    { id: 'colete', label: '🎽 Coletes', sub: 'Treino e pré-jogo' },
+                    { id: 'treino_cones', label: '🎯 Treino', sub: 'Cones, pratos, estacas' },
+                    { id: 'apoio', label: '📦 Apoio / Farmácia', sub: 'Gelo, faixas, malas' },
+                    { id: 'outro', label: 'Outros', sub: 'Bens diversos' },
+                  ].map((cat) => {
+                    const isSelected =
+                      patrimonioForm.categoria.toLowerCase() === cat.id ||
+                      (['uniforme', 'uniformes', 'fardamento'].includes(patrimonioForm.categoria.toLowerCase()) &&
+                        cat.id === 'uniforme');
+                    return (
+                      <button
+                        type="button"
+                        key={cat.id}
+                        onClick={() => {
+                          setPatrimonioForm({
+                            ...patrimonioForm,
+                            categoria: cat.id,
+                          });
+                        }}
+                        className={`p-2 rounded-xl text-left border transition flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200 shadow-sm'
+                            : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                        }`}
+                      >
+                        <span className="text-xs font-bold">{cat.label}</span>
+                        <span className="text-[9px] opacity-70 mt-0.5 leading-tight">{cat.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* STEP 2: CONDICIONAL PARA CATEGORIA UNIFORMES */}
+              {['uniforme', 'uniformes', 'fardamento'].includes(
+                patrimonioForm.categoria.toLowerCase()
+              ) && (
+                <div className="bg-blue-950/20 border border-blue-500/30 rounded-2xl p-4 space-y-3.5 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between border-b border-blue-500/20 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Shirt className="w-4 h-4 text-blue-400" />
+                      <span className="text-xs font-bold text-blue-300">
+                        2. Especificações do Fardamento Esportivo
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      Obrigatório
+                    </span>
+                  </div>
+
+                  {/* Campo Tipo de Peça */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5">
+                      Tipo de Peça <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'camisa', label: '👕 Camisa de Jogo' },
+                        { id: 'calcao', label: '🩳 Calção' },
+                        { id: 'meiao', label: '🧦 Meião' },
+                      ].map((tipo) => (
+                        <button
+                          type="button"
+                          key={tipo.id}
+                          onClick={() => {
+                            setPatrimonioForm({
+                              ...patrimonioForm,
+                              tipo_uniforme: tipo.id as 'camisa' | 'meiao' | 'calcao',
+                            });
+                          }}
+                          className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition text-center ${
+                            patrimonioForm.tipo_uniforme === tipo.id
+                              ? 'bg-blue-600 text-white border-blue-400 shadow-sm'
+                              : 'bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          }`}
+                        >
+                          {tipo.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Grid de 4 Campos: Qtd, Tamanho, Cor, Número */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-400 mb-1">
+                        Qtd de Peças <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        required
+                        value={patrimonioForm.quantidade_total}
+                        onChange={(e) =>
+                          setPatrimonioForm({
+                            ...patrimonioForm,
+                            quantidade_total: Math.max(1, Number(e.target.value)),
+                          })
+                        }
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-400 mb-1">
+                        Tamanho
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: GG"
+                        value={patrimonioForm.tamanho}
+                        onChange={(e) =>
+                          setPatrimonioForm({ ...patrimonioForm, tamanho: e.target.value })
+                        }
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-400 mb-1">
+                        Cor Principal
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Azul"
+                        value={patrimonioForm.cor}
+                        onChange={(e) =>
+                          setPatrimonioForm({ ...patrimonioForm, cor: e.target.value })
+                        }
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-400 mb-1">
+                        Número
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: 10"
+                        value={patrimonioForm.numero}
+                        onChange={(e) =>
+                          setPatrimonioForm({ ...patrimonioForm, numero: e.target.value })
+                        }
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chips Rápidos de Tamanho */}
+                  <div>
+                    <span className="text-[10px] text-zinc-400 font-medium mr-2">Tamanhos rápidos:</span>
+                    <div className="inline-flex gap-1 flex-wrap mt-1">
+                      {['P', 'M', 'G', 'GG', 'XG', 'Único'].map((t) => (
+                        <button
+                          type="button"
+                          key={t}
+                          onClick={() => setPatrimonioForm({ ...patrimonioForm, tamanho: t })}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition ${
+                            patrimonioForm.tamanho === t
+                              ? 'bg-blue-500/30 text-blue-300 border-blue-500/50'
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Observação / Marca (ex: Adidas) */}
+                  <div>
+                    <label className="block text-[10px] font-semibold text-zinc-400 mb-1">
+                      Observação / Fornecedor / Lote
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: 1, GG, Azul, 10, Adidas (fornecedor, tecido, etc.)"
+                      value={patrimonioForm.observacoes}
+                      onChange={(e) =>
+                        setPatrimonioForm({ ...patrimonioForm, observacoes: e.target.value })
+                      }
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Botão de Sugestão Automática de Nome */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const tipoNome =
+                          patrimonioForm.tipo_uniforme === 'calcao'
+                            ? 'Calção'
+                            : patrimonioForm.tipo_uniforme === 'meiao'
+                            ? 'Meião'
+                            : 'Camisa';
+                        const numStr = patrimonioForm.numero ? ` #${patrimonioForm.numero}` : '';
+                        const corStr = patrimonioForm.cor ? ` ${patrimonioForm.cor}` : '';
+                        const tamStr = patrimonioForm.tamanho ? ` (${patrimonioForm.tamanho})` : '';
+                        const obsStr = patrimonioForm.observacoes ? ` - ${patrimonioForm.observacoes}` : '';
+                        const autoNome = `${tipoNome}${numStr}${corStr}${tamStr}${obsStr}`.trim();
+                        setPatrimonioForm({ ...patrimonioForm, nome: autoNome });
+                      }}
+                      className="text-[11px] text-blue-400 hover:text-blue-300 underline font-medium inline-flex items-center gap-1"
+                    >
+                      <span>⚡ Preencher nome do item automaticamente com estes dados</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: NOME E QUANTIDADE (SE NÃO FOR UNIFORME) */}
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                  Nome de Identificação do Bem <span className="text-rose-400">*</span>
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Jogo de Coletes Laranjas, Bolas Penalty S11..."
+                  placeholder={
+                    ['uniforme', 'uniformes', 'fardamento'].includes(
+                      patrimonioForm.categoria.toLowerCase()
+                    )
+                      ? 'Ex: Camisa #10 Azul (GG) - Adidas'
+                      : 'Ex: Bolsão com 6 Bolas Penalty Campo...'
+                  }
                   value={patrimonioForm.nome}
                   onChange={(e) => setPatrimonioForm({ ...patrimonioForm, nome: e.target.value })}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Categoria</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: bola, fardamento, cone, apoio"
-                    value={patrimonioForm.categoria}
-                    onChange={(e) => setPatrimonioForm({ ...patrimonioForm, categoria: e.target.value })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
-                  />
+              {!['uniforme', 'uniformes', 'fardamento'].includes(
+                patrimonioForm.categoria.toLowerCase()
+              ) && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      Quantidade Total <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      required
+                      value={patrimonioForm.quantidade_total}
+                      onChange={(e) =>
+                        setPatrimonioForm({
+                          ...patrimonioForm,
+                          quantidade_total: Number(e.target.value),
+                        })
+                      }
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      Observações / Detalhes
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Calibradas a 11 lbs"
+                      value={patrimonioForm.observacoes}
+                      onChange={(e) =>
+                        setPatrimonioForm({ ...patrimonioForm, observacoes: e.target.value })
+                      }
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Quantidade Total</label>
-                  <input
-                    type="number"
-                    min={0}
-                    required
-                    value={patrimonioForm.quantidade_total}
-                    onChange={(e) => setPatrimonioForm({ ...patrimonioForm, quantidade_total: Number(e.target.value) })}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
+              )}
 
+              {/* STEP 4: ESTADO DE CONSERVAÇÃO */}
               <div>
-                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Estado de Conservação</label>
+                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                  Estado de Conservação
+                </label>
                 <select
                   value={patrimonioForm.estado_conservacao}
                   onChange={(e) =>
                     setPatrimonioForm({
                       ...patrimonioForm,
-                      estado_conservacao: e.target.value as 'novo' | 'bom' | 'regular' | 'desgastado',
+                      estado_conservacao: e.target.value as
+                        | 'novo'
+                        | 'bom'
+                        | 'regular'
+                        | 'desgastado',
                     })
                   }
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
@@ -2020,7 +2424,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                 </select>
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2">
+              {/* AÇÕES */}
+              <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setModalPatrimonioOpen(false)}
@@ -2030,9 +2435,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
                 >
-                  Salvar Bem
+                  {editingPatrimonio ? 'Salvar Alterações' : 'Cadastrar Item no Patrimônio'}
                 </button>
               </div>
             </form>
