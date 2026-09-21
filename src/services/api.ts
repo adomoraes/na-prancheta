@@ -68,6 +68,8 @@ import {
   AdminAdversarioDTO,
   AdminScoutDTO,
   AdminScoutLeaderboardDTO,
+  InvestorLeadDTO,
+  InvestorLeadResponse,
 } from '../types';
 
 export const api = {
@@ -648,6 +650,26 @@ export const api = {
       });
     },
   },
+
+  // 10. LEADS DE INVESTIDORES & PARCERIAS COMERCIAIS
+  leads: {
+    async submitInvestorLead(data: InvestorLeadDTO): Promise<InvestorLeadResponse> {
+      return request<InvestorLeadResponse>('/leads/investor', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    async listInvestorLeads(params?: { tipo_investidor?: string; status?: string; page?: number }) {
+      const query = new URLSearchParams();
+      if (params?.tipo_investidor) query.set('tipo_investidor', params.tipo_investidor);
+      if (params?.status) query.set('status', params.status);
+      if (params?.page) query.set('page', String(params.page));
+      const qs = query.toString() ? `?${query.toString()}` : '';
+      return request<{ success: boolean; data: any }>(`/admin/leads/investor${qs}`);
+    },
+  },
 };
+
 
 

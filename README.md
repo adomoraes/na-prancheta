@@ -79,6 +79,15 @@ O projeto conta com rastreabilidade total e especificações executáveis gerada
 - **Resiliência Offline:** Shell da aplicação e fontes cacheadas pelo Service Worker (Workbox). Permite visualizar ficha do jogo, escalar time e consultar regras mesmo em campos ou vestiários sem sinal 4G/5G.
 - **Notificação de Atualização:** Toast interativo que detecta novas versões da aplicação para recarga suave.
 
+### 10. 💼 Landing Page Comercial & Vitrine para Investidores
+- **Porta de Entrada na Raiz (`/`):** Vitrine pública moderna de padrão internacional com Dark Mode (Zinc 950), tipografia `Cabinet Grotesk` e `Plus Jakarta Sans`, microanimações e narrativa voltada a fundos de venture capital (SportsTechs/SaaS) e investidores-anjo.
+- **Showcase Interativo dos 5 Pilares:** Abas dinâmicas demonstrando os diferenciais culturais (*Régua T-35*, *Presença em 1 Toque*, *Prancheta Tática 4-3-3*, *Vaquinha PIX de Arbitragem* e *A Lendária "Trava da Resenha"*).
+- **Tese de Mercado & TAM/SAM/SOM:** Exposição dos números do mercado de futebol amador no Brasil (+100k times amadores; R$ 15,2 bilhões movimentados ao ano) e o flywheel de crescimento orgânico viral com CAC próximo a zero.
+- **Modelo de Negócios (4 Motores):** SaaS por Equipe (B2Team), B2B Arenas e Complexos, FinTech/Take-Rate PIX e Naming Rights/Patrocínios com marcas de cerveja e material esportivo.
+- **Calculadora Dinâmica de ROI da Rodada:** Simulador interativo calculando horas de estresse poupadas e prejuízos de calote evitados ao ano por clube.
+- **Captação Híbrida de Leads (`investor_leads`):** Formulário validado com persistência relacional no backend Laravel (`POST /api/leads/investor`) e abertura imediata de conversa estruturada no WhatsApp dos fundadores.
+- **Transição Fluida para o App:** Botão "Acessar Plataforma / Demo" para experimentação direta da sandbox operacional sem cadastro prévio, com atalho de retorno à vitrine no cabeçalho.
+
 ---
 
 ## 🏗️ Arquitetura & Stack Tecnológica

@@ -32,11 +32,37 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { PwaPrompt } from './components/PwaPrompt';
 import { usePwa } from './hooks/usePwa';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LandingPage } from './components/landing/LandingPage';
 import { Calendar, Shield, DollarSign, Trophy, Package, Lock } from 'lucide-react';
 
 function AppContent() {
   const pwaState = usePwa();
   const { user, activeRole, canAccessTab, isLoginModalOpen, openLoginModal, closeLoginModal } = useAuth();
+
+  // Modo de visualização: 'landing' (vitrine comercial padrão na raiz) ou 'app' (aplicação de dia de jogo)
+  const [viewMode, setViewMode] = useState<'landing' | 'app'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlView = params.get('view');
+      if (urlView === 'app') return 'app';
+      if (urlView === 'landing') return 'landing';
+      const saved = localStorage.getItem('naprancheta_view_mode');
+      if (saved === 'app') return 'app';
+    }
+    return 'landing';
+  });
+
+  const handleEnterApp = () => {
+    setViewMode('app');
+    localStorage.setItem('naprancheta_view_mode', 'app');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleGoToLanding = () => {
+    setViewMode('landing');
+    localStorage.setItem('naprancheta_view_mode', 'landing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const [currentView, setCurrentView] = useState<'match' | 'admin'>('match');
   const [activeTab, setActiveTab] = useState<'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'>('jogo');
@@ -378,6 +404,17 @@ function AppContent() {
     return api.encerrarVaquinha(evento.id);
   };
 
+  // Renderização da Landing Page Comercial para Investidores (Padrão na Raiz)
+  if (viewMode === 'landing') {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+        <PwaPrompt pwaState={pwaState} />
+        <LandingPage onEnterApp={handleEnterApp} />
+        <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
+      </div>
+    );
+  }
+
   if (currentView === 'admin' && user?.role === 'root') {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
@@ -389,6 +426,7 @@ function AppContent() {
           onInstallPwa={pwaState.promptInstall}
           currentView={currentView}
           onToggleAdminView={() => setCurrentView('match')}
+          onGoToLanding={handleGoToLanding}
         />
         <AdminDashboard onBackToMatch={() => setCurrentView('match')} />
         <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
@@ -415,6 +453,7 @@ function AppContent() {
             openLoginModal();
           }
         }}
+        onGoToLanding={handleGoToLanding}
       />
 
       {/* Conteúdo Principal */}

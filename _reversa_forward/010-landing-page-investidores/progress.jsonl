@@ -1,0 +1,13 @@
+{"ts":"2026-09-21T11:55:00Z","action":"T001","status":"done","files":["backend/database/migrations/2026_09_21_500000_create_investor_leads_table.php"]}
+{"ts":"2026-09-21T11:56:00Z","action":"T002","status":"done","files":["backend/app/Models/InvestorLead.php"]}
+{"ts":"2026-09-21T11:56:30Z","action":"T003","status":"done","files":["backend/database/migrations/"]}
+{"ts":"2026-09-21T11:57:00Z","action":"T004","status":"done","files":["backend/tests/Feature/InvestorLeadTest.php"]}
+{"ts":"2026-09-21T11:58:00Z","action":"T005","status":"done","files":["backend/app/Http/Controllers/Api/InvestorLeadController.php"]}
+{"ts":"2026-09-21T11:59:00Z","action":"T006","status":"done","files":["backend/routes/api.php"]}
+{"ts":"2026-09-21T12:01:00Z","action":"T007","status":"done","files":["src/types.ts"]}
+{"ts":"2026-09-21T12:02:00Z","action":"T008","status":"done","files":["src/services/api.ts"]}
+{"ts":"2026-09-21T12:06:00Z","action":"T009","status":"done","files":["src/components/landing/LandingNavbar.tsx","src/components/landing/LandingHero.tsx","src/components/landing/LandingProblemSolution.tsx","src/components/landing/LandingFeatureShowcase.tsx","src/components/landing/LandingMarketThesis.tsx","src/components/landing/LandingBusinessModel.tsx","src/components/landing/LandingROICalculator.tsx","src/components/landing/LandingSocialProof.tsx","src/components/landing/LandingLeadModal.tsx","src/components/landing/LandingFooter.tsx"]}
+{"ts":"2026-09-21T12:07:00Z","action":"T010","status":"done","files":["src/components/landing/LandingPage.tsx"]}
+{"ts":"2026-09-21T12:08:00Z","action":"T011","status":"done","files":["src/App.tsx","src/components/Header.tsx"]}
+{"ts":"2026-09-21T12:09:00Z","action":"T012","status":"done","files":["backend/tests/","src/"]}
+{"ts":"2026-09-21T12:09:30Z","action":"T013","status":"done","files":["_reversa_sdd/addenda/010-landing-page-investidores.md","README.md"]}

@@ -276,5 +276,30 @@ export interface AdminScoutLeaderboardDTO {
   gols_sofridos: number;
 }
 
+// Tipos para Leads de Investidores & Parcerias Comerciais (Landing Page)
+export type TipoInvestidor = 'anjo' | 'fundo_vc' | 'arena_liga' | 'outro';
+export type TicketEstimado = 'ate_50k' | '50k_200k' | '200k_1m' | 'acima_1m' | 'parceria_comercial';
 
+export interface InvestorLeadDTO {
+  id?: number;
+  nome: string;
+  email: string;
+  telefone: string;
+  tipo_investidor: TipoInvestidor;
+  ticket_estimado?: TicketEstimado | string;
+  mensagem?: string;
+  origem?: string;
+  status?: string;
+  created_at?: string;
+}
 
+export interface InvestorLeadResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    id: number;
+    nome: string;
+    tipo_investidor: TipoInvestidor;
+    created_at: string;
+  };
+}

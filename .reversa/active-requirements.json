@@ -1,17 +1,17 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/006-crud-locais-campos",
-  "feature-id": "006",
-  "short-name": "crud-locais-campos",
-  "started-at": "2026-09-21T07:37:00Z",
+  "feature-dir": "_reversa_forward/010-landing-page-investidores",
+  "feature-id": "010",
+  "short-name": "landing-page-investidores",
+  "started-at": "2026-09-21T11:35:00Z",
   "current-stage": "sync",
   "stages-completed": [
     "requirements",
+    "clarify",
     "plan",
     "to-do",
     "coding",
-    "test",
-    "sync"
+    "test"
   ],
   "paused-features": []
 }
