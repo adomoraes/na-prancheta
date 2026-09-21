@@ -21,12 +21,13 @@ class Partida extends Model
     protected $fillable = [
         'id',
         'time_id',
+        'local_id',
+        'adversario_id',
         'adversario',
         'data_partida',
         'horario_inicio',
         'horario_chegada_t70',
         'horario_prelecao_t35',
-        'local_id',
         'local_nome',
         'local_endereco',
         'local_maps_url',
@@ -86,6 +87,11 @@ class Partida extends Model
     public function local(): BelongsTo
     {
         return $this->belongsTo(Local::class, 'local_id');
+    }
+
+    public function adversarioRel(): BelongsTo
+    {
+        return $this->belongsTo(Adversario::class, 'adversario_id');
     }
 
     public function confirmacoes(): HasMany

@@ -136,6 +136,38 @@ class LegacyInitialDataSeeder extends Seeder
                 ]
             );
 
+            // 3.2 ADVERSÁRIOS & RIVAIS
+            $adversarioPrincipalId = '44444444-4444-4444-4444-444444444444';
+            DB::table('adversarios')->updateOrInsert(
+                ['id' => $adversarioPrincipalId],
+                [
+                    'time_id' => $timeId,
+                    'nome' => 'União Alvinegra F.C.',
+                    'responsavel_nome' => 'Toninho Diretor',
+                    'responsavel_telefone' => '11988887777',
+                    'cor_uniforme_principal' => 'Preto e Branco',
+                    'observacoes' => 'Rival clássico regional. Jogo truncado e pegado.',
+                    'ativo' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+            $adversarioSecundarioId = '44444444-4444-4444-4444-555555555555';
+            DB::table('adversarios')->updateOrInsert(
+                ['id' => $adversarioSecundarioId],
+                [
+                    'time_id' => $timeId,
+                    'nome' => 'Vila Real F.C.',
+                    'responsavel_nome' => 'Danilo Capitão',
+                    'responsavel_telefone' => '11977776666',
+                    'cor_uniforme_principal' => 'Azul e Amarelo',
+                    'observacoes' => 'Time jovem e rápido no contra-ataque.',
+                    'ativo' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+
             // 4. PARTIDA PRINCIPAL
             $partidaId = '33333333-3333-3333-3333-333333333333';
             DB::table('partidas')->updateOrInsert(
@@ -143,6 +175,7 @@ class LegacyInitialDataSeeder extends Seeder
                 [
                     'time_id' => $timeId,
                     'local_id' => $localPrincipalId,
+                    'adversario_id' => $adversarioPrincipalId,
                     'adversario' => 'União Alvinegra F.C.',
                     'data_partida' => now()->addDays(2)->format('Y-m-d'),
                     'horario_inicio' => '10:00:00',
