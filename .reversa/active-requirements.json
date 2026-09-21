@@ -1,17 +1,15 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/004-painel-adm-root",
-  "feature-id": "004",
-  "short-name": "painel-adm-root",
-  "started-at": "2026-09-21T02:40:00Z",
-  "current-stage": "sync",
+  "feature-dir": "_reversa_forward/005-numero-calcado-atleta",
+  "feature-id": "005",
+  "short-name": "numero-calcado-atleta",
+  "started-at": "2026-09-21T07:16:00Z",
+  "current-stage": "coding",
   "stages-completed": [
     "requirements",
-    "clarify",
     "plan",
     "to-do",
-    "coding",
-    "sync"
+    "coding"
   ],
   "paused-features": []
 }

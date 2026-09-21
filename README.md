@@ -66,7 +66,7 @@ O projeto conta com rastreabilidade total e especificações executáveis gerada
 - **Dashboard Isolada:** Interface administrativa em Dark Mode (Zinc 950) desacoplada do fluxo da partida, acessível pelo botão "Painel Admin" no cabeçalho exclusivo para o usuário `root`.
 - **5 Módulos de CRUD Mestre:**
   1. **Usuários & Perfis:** Criação, edição, alteração de papéis, redefinição de senhas com revogação forçada de tokens e exclusão de contas.
-  2. **Elenco & Atletas (Soft Delete):** Cadastro e manutenção de atletas com exclusão lógica (`ativo: false`), garantindo preservação de scouts históricos e presenças passadas.
+  2. **Elenco & Atletas (Soft Delete & Numeração de Calçado):** Cadastro e manutenção de atletas com exclusão lógica (`ativo: false`), número de calçado esportivo (25 a 50), posições e vínculos, garantindo preservação de scouts históricos e presenças passadas.
   3. **Partidas & Vestiário:** Agendamento de jogos com cálculo automatizado dos horários regulamentares de vestiário (T-50, T-35 e T-25) e alteração de status (`agendada`, `em_andamento`, `encerrada`, `cancelada`).
   4. **Caixa Geral do Clube:** Extrato financeiro consolidado de entradas e saídas administrativas com cálculo de saldo em tempo real.
   5. **Patrimônio & Almoxarifado:** Inventário de bens esportivos (bolas, coletes, redes, cones) com estado de conservação e quantidade total.
@@ -92,7 +92,7 @@ O projeto conta com rastreabilidade total e especificações executáveis gerada
 ┌─────────────────────────────────────────────────────────────┐
 │                   Laravel 11 Backend API                    │
 │   PHP 8.3+ • 9 Controllers RESTful • Middleware CheckRole   │
-│   Grupo /api/admin/* exclusivo ROOT • 16 Migrations         │
+│   Grupo /api/admin/* exclusivo ROOT • 17 Migrations         │
 └──────────────────────────────┬──────────────────────────────┘
                                │
                                ▼
@@ -201,7 +201,13 @@ cd backend
 php artisan config:clear --ansi && php artisan test
 ```
 
-### Cobertura da Suíte (34 Testes Passando):
+### Cobertura da Suíte (39 Testes Passando, 173 Asserções):
+- **`AtletaCalcadoTest` (5 testes):**
+  - Persistência e leitura do número de calçado esportivo (ex.: 41).
+  - Persistência com valor nulo para atletas sem calçado informado.
+  - Validação estrita de limites no backend (25 a 50) com rejeição 422.
+  - Atualização cadastral da numeração via PUT no painel administrativo.
+  - Suporte ao número do calçado na rota autenticada de cadastro de atletas.
 - **`AdminCrudTest` (8 testes):**
   - Rejeição 401 para requisições anônimas em rotas administrativas.
   - Rejeição 403 para usuários sem perfil `root` (incluindo perfil `geral`).
@@ -249,7 +255,8 @@ npm run build
 │   ├── 001-implementar-pwa/
 │   ├── 002-autenticacao-google-rbac/
 │   ├── 003-bloqueio-rotas-auth/
-│   └── 004-painel-adm-root/
+│   ├── 004-painel-adm-root/
+│   └── 005-numero-calcado-atleta/
 ├── _reversa_sdd/                        # Especificações de Engenharia Reversa
 ├── docker-compose.yml                   # Orquestração do banco PostgreSQL 16
 ├── start.sh                             # Script de inicialização automática de todos os serviços

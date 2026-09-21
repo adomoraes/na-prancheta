@@ -26,11 +26,13 @@ class Atleta extends Model
         'posicao_principal',
         'posicao_secundaria',
         'tipo_vinculo',
+        'numero_calcado',
         'ativo',
     ];
 
     protected $casts = [
         'numero_camisa' => 'integer',
+        'numero_calcado' => 'integer',
         'ativo' => 'boolean',
     ];
 

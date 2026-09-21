@@ -1,0 +1,10 @@
+{"ts":"2026-09-21T07:22:30Z","action":"T001","status":"done","files":["backend/database/migrations/2026_09_21_100000_add_numero_calcado_to_atletas_table.php"]}
+{"ts":"2026-09-21T07:22:45Z","action":"T002","status":"done","files":["src/types.ts"]}
+{"ts":"2026-09-21T07:23:40Z","action":"T003","status":"done","files":["backend/tests/Feature/AtletaCalcadoTest.php"]}
+{"ts":"2026-09-21T07:24:05Z","action":"T004","status":"done","files":["backend/app/Models/Atleta.php"]}
+{"ts":"2026-09-21T07:24:20Z","action":"T005","status":"done","files":["backend/app/Http/Controllers/Api/AdminController.php"]}
+{"ts":"2026-09-21T07:24:30Z","action":"T006","status":"done","files":["backend/app/Http/Controllers/Api/AtletaController.php"]}
+{"ts":"2026-09-21T07:26:30Z","action":"T007","status":"done","files":["src/components/admin/AdminDashboard.tsx","src/services/api.ts","src/types.ts"]}
+{"ts":"2026-09-21T07:27:00Z","action":"T008","status":"done","files":["src/components/SelfOnboardingModal.tsx"]}
+{"ts":"2026-09-21T07:28:00Z","action":"T009","status":"done","files":["backend/tests/Feature/AtletaCalcadoTest.php"]}
+{"ts":"2026-09-21T07:28:40Z","action":"T010","status":"done","files":["README.md"]}

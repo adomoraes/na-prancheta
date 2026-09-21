@@ -21,6 +21,7 @@ export const SelfOnboardingModal: React.FC<SelfOnboardingModalProps> = ({
   const [numeroCamisa, setNumeroCamisa] = useState<number | ''>('');
   const [tamanhoCamisa, setTamanhoCamisa] = useState('G');
   const [tamanhoCalcao, setTamanhoCalcao] = useState('G');
+  const [numeroCalcado, setNumeroCalcado] = useState<number | ''>(41);
   const [tipoVinculo, setTipoVinculo] = useState<TipoVinculo>('mensalista');
 
   if (!isOpen) return null;
@@ -56,6 +57,7 @@ export const SelfOnboardingModal: React.FC<SelfOnboardingModalProps> = ({
       nivel_acesso: 'atleta',
       tamanho_camisa: tamanhoCamisa,
       tamanho_calcao: tamanhoCalcao,
+      numero_calcado: numeroCalcado !== '' ? Number(numeroCalcado) : undefined,
       ativo: true,
       criado_em: new Date().toISOString(),
       chegou_vestiario: true,
@@ -191,13 +193,13 @@ export const SelfOnboardingModal: React.FC<SelfOnboardingModalProps> = ({
             </div>
           </div>
 
-          {/* Tamanhos de Uniforme (Camisa e Calção) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          {/* Tamanhos de Uniforme e Calçado */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div>
               <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">
-                Tamanho da Camisa
+                Camisa
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-1.5">
                 {['P', 'M', 'G', 'GG'].map((tam) => (
                   <button
                     type="button"
@@ -217,9 +219,9 @@ export const SelfOnboardingModal: React.FC<SelfOnboardingModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">
-                Tamanho do Calção
+                Calção
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-1.5">
                 {['P', 'M', 'G', 'GG'].map((tam) => (
                   <button
                     type="button"
@@ -235,6 +237,21 @@ export const SelfOnboardingModal: React.FC<SelfOnboardingModalProps> = ({
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">
+                Calçado (Chuteira)
+              </label>
+              <input
+                type="number"
+                min={25}
+                max={50}
+                placeholder="Ex: 41"
+                value={numeroCalcado}
+                onChange={(e) => setNumeroCalcado(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 font-bold focus:outline-none focus:border-emerald-500"
+              />
             </div>
           </div>
 

@@ -395,6 +395,7 @@ export const api = {
       nome: string;
       apelido?: string;
       numero_camisa?: number;
+      numero_calcado?: number;
       posicao_principal: string;
       posicao_secundaria?: string;
       tipo_vinculo?: string;
