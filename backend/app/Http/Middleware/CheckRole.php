@@ -18,15 +18,19 @@ class CheckRole
     {
         $user = $request->user('sanctum') ?? $request->user();
 
-        // Se houver usuário autenticado, valida rigorosamente a permissão por role
-        if ($user) {
-            if (!empty($roles) && !$user->hasRole($roles)) {
-                return response()->json([
-                    'message' => 'Acesso restrito. Esta operação requer perfil de: ' . implode(', ', $roles) . '.',
-                    'required_roles' => $roles,
-                    'user_role' => $user->role,
-                ], 403);
-            }
+        // Se a rota exige perfil restrito e não há usuário autenticado, rejeita com 401
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        if (!empty($roles) && !$user->hasRole($roles)) {
+            return response()->json([
+                'message' => 'Acesso restrito. Esta operação requer perfil de: ' . implode(', ', $roles) . '.',
+                'required_roles' => $roles,
+                'user_role' => $user->role,
+            ], 403);
         }
 
         return $next($request);

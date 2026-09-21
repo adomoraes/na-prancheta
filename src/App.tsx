@@ -35,11 +35,26 @@ import { Calendar, Shield, DollarSign, Trophy, Package, Lock } from 'lucide-reac
 
 function AppContent() {
   const pwaState = usePwa();
-  const { user, activeRole, canAccessTab, isLoginModalOpen, closeLoginModal } = useAuth();
+  const { user, activeRole, canAccessTab, isLoginModalOpen, openLoginModal, closeLoginModal } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'>('jogo');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [apiConnected, setApiConnected] = useState<boolean>(false);
+
+  // Guarda de navegação: exige autenticação para abas operacionais protegidas
+  const handleTabSelect = (tab: 'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado') => {
+    if (tab === 'jogo') {
+      setActiveTab('jogo');
+      return;
+    }
+
+    if (!user || !canAccessTab(tab)) {
+      openLoginModal();
+      return;
+    }
+
+    setActiveTab(tab);
+  };
 
   // Estados persistentes em localStorage com fallback inicial
   const [atletas, setAtletas] = useState<Atleta[]>(() => {
@@ -146,6 +161,11 @@ function AppContent() {
 
   // Handlers assíncronos com sincronização na API Laravel 11
   const handleUpdatePresenca = async (atletaId: string, status: StatusConfirmacao) => {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+
     setPresencas((prev) =>
       prev.map((p) =>
         p.atleta_id === atletaId
@@ -225,6 +245,11 @@ function AppContent() {
   };
 
   const handleAddAtleta = async (novo: Atleta) => {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+
     setAtletas((prev) => [...prev, novo]);
 
     setPresencas((prev) => [
@@ -365,7 +390,7 @@ function AppContent() {
         {/* Abas Superiores Mobile & Desktop com Indicadores de Responsabilidade */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none border-b border-zinc-800/80">
           <button
-            onClick={() => setActiveTab('jogo')}
+            onClick={() => handleTabSelect('jogo')}
             className={`min-h-[42px] px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap active:scale-[0.98] ${
               activeTab === 'jogo'
                 ? 'bg-zinc-800 text-emerald-400 border border-emerald-500/30 shadow-sm'
@@ -377,7 +402,7 @@ function AppContent() {
           </button>
 
           <button
-            onClick={() => setActiveTab('tatica')}
+            onClick={() => handleTabSelect('tatica')}
             className={`min-h-[42px] px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap active:scale-[0.98] ${
               activeTab === 'tatica'
                 ? 'bg-zinc-800 text-blue-400 border border-blue-500/30 shadow-sm'
@@ -390,7 +415,7 @@ function AppContent() {
           </button>
 
           <button
-            onClick={() => setActiveTab('financeiro')}
+            onClick={() => handleTabSelect('financeiro')}
             className={`min-h-[42px] px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap active:scale-[0.98] ${
               activeTab === 'financeiro'
                 ? 'bg-zinc-800 text-amber-400 border border-amber-500/30 shadow-sm'
@@ -403,7 +428,7 @@ function AppContent() {
           </button>
 
           <button
-            onClick={() => setActiveTab('scout')}
+            onClick={() => handleTabSelect('scout')}
             className={`min-h-[42px] px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap active:scale-[0.98] ${
               activeTab === 'scout'
                 ? 'bg-zinc-800 text-purple-400 border border-purple-500/30 shadow-sm'
@@ -412,10 +437,11 @@ function AppContent() {
           >
             <Trophy className="w-3.5 h-3.5 text-purple-400" />
             <span>Scout Pós-Jogo</span>
+            {!canAccessTab('scout') && <Lock className="w-3 h-3 text-zinc-500" />}
           </button>
 
           <button
-            onClick={() => setActiveTab('almoxarifado')}
+            onClick={() => handleTabSelect('almoxarifado')}
             className={`min-h-[42px] px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap active:scale-[0.98] ${
               activeTab === 'almoxarifado'
                 ? 'bg-zinc-800 text-pink-400 border border-pink-500/30 shadow-sm'
@@ -503,7 +529,7 @@ function AppContent() {
       {/* Barra de Navegação Inferior Fixa Mobile (PWA Feel) */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800/80 px-2 py-1.5 flex justify-around items-center">
         <button
-          onClick={() => setActiveTab('jogo')}
+          onClick={() => handleTabSelect('jogo')}
           className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
             activeTab === 'jogo' ? 'text-emerald-400 font-bold' : 'text-zinc-400'
           }`}
@@ -513,7 +539,7 @@ function AppContent() {
         </button>
 
         <button
-          onClick={() => setActiveTab('tatica')}
+          onClick={() => handleTabSelect('tatica')}
           className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
             activeTab === 'tatica' ? 'text-blue-400 font-bold' : 'text-zinc-400'
           }`}
@@ -523,7 +549,7 @@ function AppContent() {
         </button>
 
         <button
-          onClick={() => setActiveTab('financeiro')}
+          onClick={() => handleTabSelect('financeiro')}
           className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
             activeTab === 'financeiro' ? 'text-amber-400 font-bold' : 'text-zinc-400'
           }`}
@@ -533,7 +559,7 @@ function AppContent() {
         </button>
 
         <button
-          onClick={() => setActiveTab('scout')}
+          onClick={() => handleTabSelect('scout')}
           className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
             activeTab === 'scout' ? 'text-purple-400 font-bold' : 'text-zinc-400'
           }`}
@@ -543,7 +569,7 @@ function AppContent() {
         </button>
 
         <button
-          onClick={() => setActiveTab('almoxarifado')}
+          onClick={() => handleTabSelect('almoxarifado')}
           className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
             activeTab === 'almoxarifado' ? 'text-pink-400 font-bold' : 'text-zinc-400'
           }`}
