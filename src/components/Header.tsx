@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Sparkles,
   KeyRound,
+  Settings2,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -21,6 +22,8 @@ interface HeaderProps {
   apiConnected?: boolean;
   canInstallPwa?: boolean;
   onInstallPwa?: () => void;
+  currentView?: 'match' | 'admin';
+  onToggleAdminView?: () => void;
 }
 
 const ROLE_CONFIG: Record<
@@ -52,6 +55,11 @@ const ROLE_CONFIG: Record<
     badgeClass: 'bg-purple-500/10 text-purple-300 border-purple-500/30 font-extrabold',
     icon: Shield,
   },
+  root: {
+    label: 'ROOT / Master',
+    badgeClass: 'bg-rose-500/10 text-rose-300 border-rose-500/30 font-extrabold',
+    icon: Shield,
+  },
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -59,6 +67,8 @@ export const Header: React.FC<HeaderProps> = ({
   apiConnected = true,
   canInstallPwa = false,
   onInstallPwa,
+  currentView = 'match',
+  onToggleAdminView,
 }) => {
   const { user, isAuthenticated, activeRole, setActiveRole, logout, openLoginModal } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -140,6 +150,22 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Instalar</span>
+            </button>
+          )}
+
+          {/* Botão de Acesso Exclusivo para ROOT */}
+          {user?.role === 'root' && onToggleAdminView && (
+            <button
+              onClick={onToggleAdminView}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition active:scale-95 border ${
+                currentView === 'admin'
+                  ? 'bg-zinc-800 text-emerald-400 border-zinc-700 hover:bg-zinc-700'
+                  : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-sm'
+              }`}
+              title={currentView === 'admin' ? 'Voltar para a Ficha do Jogo' : 'Abrir Painel Administrativo ROOT'}
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              <span>{currentView === 'admin' ? 'Ver Jogo' : 'Painel Admin'}</span>
             </button>
           )}
 
@@ -233,6 +259,19 @@ export const Header: React.FC<HeaderProps> = ({
                         )}
                       </div>
                     </div>
+                  )}
+
+                  {user.role === 'root' && onToggleAdminView && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onToggleAdminView();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-300 hover:bg-rose-500/10 rounded-lg transition font-semibold"
+                    >
+                      <Settings2 className="w-3.5 h-3.5 text-rose-400" />
+                      <span>{currentView === 'admin' ? 'Voltar ao Dia de Jogo' : 'Painel Admin ROOT'}</span>
+                    </button>
                   )}
 
                   <button

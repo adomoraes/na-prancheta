@@ -28,6 +28,7 @@ import { AlmoxarifadoView } from './components/AlmoxarifadoView';
 import { SelfOnboardingModal } from './components/SelfOnboardingModal';
 import { AcessoRestrito } from './components/AcessoRestrito';
 import { LoginModal } from './components/auth/LoginModal';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 import { PwaPrompt } from './components/PwaPrompt';
 import { usePwa } from './hooks/usePwa';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -37,6 +38,7 @@ function AppContent() {
   const pwaState = usePwa();
   const { user, activeRole, canAccessTab, isLoginModalOpen, openLoginModal, closeLoginModal } = useAuth();
 
+  const [currentView, setCurrentView] = useState<'match' | 'admin'>('match');
   const [activeTab, setActiveTab] = useState<'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'>('jogo');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [apiConnected, setApiConnected] = useState<boolean>(false);
@@ -98,6 +100,13 @@ function AppContent() {
       setActiveTab('jogo');
     }
   }, [activeRole]);
+
+  // Guard de segurança: se o usuário deixar de ser ROOT (ou deslogar), retorna à visão da partida
+  useEffect(() => {
+    if (currentView === 'admin' && user?.role !== 'root') {
+      setCurrentView('match');
+    }
+  }, [user, currentView]);
 
   // Hidratação via API REST Laravel 11 com fallback gracioso
   useEffect(() => {
@@ -369,6 +378,24 @@ function AppContent() {
     return api.encerrarVaquinha(evento.id);
   };
 
+  if (currentView === 'admin' && user?.role === 'root') {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+        <PwaPrompt pwaState={pwaState} />
+        <Header
+          onOpenOnboarding={() => setIsOnboardingOpen(true)}
+          apiConnected={apiConnected}
+          canInstallPwa={pwaState.isInstallable && !pwaState.isInstalled}
+          onInstallPwa={pwaState.promptInstall}
+          currentView={currentView}
+          onToggleAdminView={() => setCurrentView('match')}
+        />
+        <AdminDashboard onBackToMatch={() => setCurrentView('match')} />
+        <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
       {/* PWA Manager */}
@@ -380,6 +407,14 @@ function AppContent() {
         apiConnected={apiConnected}
         canInstallPwa={pwaState.isInstallable && !pwaState.isInstalled}
         onInstallPwa={pwaState.promptInstall}
+        currentView={currentView}
+        onToggleAdminView={() => {
+          if (user?.role === 'root') {
+            setCurrentView('admin');
+          } else {
+            openLoginModal();
+          }
+        }}
       />
 
       {/* Conteúdo Principal */}

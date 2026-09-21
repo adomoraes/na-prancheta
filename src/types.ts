@@ -1,4 +1,4 @@
-export type NivelAcesso = 'atleta' | 'tecnico' | 'financeiro' | 'geral' | 'almoxarifado';
+export type NivelAcesso = 'atleta' | 'tecnico' | 'financeiro' | 'geral' | 'almoxarifado' | 'root';
 export type TipoVinculo = 'mensalista' | 'convidado' | 'inativo';
 export type TipoEvento = 'amistoso' | 'campeonato' | 'treino' | 'evento_social';
 export type StatusConfirmacao = 'confirmado' | 'recusado' | 'duvida' | 'lista_espera';
@@ -113,5 +113,81 @@ export interface User {
 export interface AuthResponse {
   token: string;
   user: User;
+}
+
+// DTOs para o Painel Administrativo ROOT
+export interface AdminUserDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  role: NivelAcesso;
+  avatar_url?: string | null;
+  created_at?: string;
+  atleta?: {
+    id: string;
+    nome: string;
+    apelido?: string;
+  } | null;
+}
+
+export interface AdminAtletaDTO {
+  id: string;
+  nome: string;
+  apelido?: string | null;
+  numero_camisa?: number | null;
+  posicao_principal: string;
+  posicao_secundaria?: string | null;
+  tipo_vinculo?: string;
+  ativo: boolean;
+  user_id?: string | null;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
+}
+
+export interface AdminPartidaDTO {
+  id: string;
+  adversario: string;
+  data_partida: string;
+  horario_inicio: string;
+  local_nome: string;
+  local_endereco?: string | null;
+  local_maps_url?: string | null;
+  cor_uniforme?: string;
+  limite_confirmados?: number;
+  valor_cota_centavos?: number;
+  meta_arrecadacao_centavos?: number;
+  chave_pix_cobranca?: string | null;
+  status: 'agendada' | 'em_andamento' | 'encerrada' | 'cancelada';
+}
+
+export interface AdminCaixaMovimentacaoDTO {
+  id: string;
+  tipo: 'entrada' | 'saida';
+  valor_centavos: number;
+  descricao: string;
+  data_movimentacao?: string;
+  responsavel?: string;
+}
+
+export interface AdminCaixaResponseDTO {
+  saldo_centavos: number;
+  saldo_formatado: string;
+  total_entradas_centavos: number;
+  total_saidas_centavos: number;
+  movimentacoes: AdminCaixaMovimentacaoDTO[];
+}
+
+export interface AdminPatrimonioDTO {
+  id: string;
+  nome: string;
+  categoria: string;
+  quantidade_total: number;
+  estado_conservacao: 'novo' | 'bom' | 'regular' | 'desgastado';
+  ativo?: boolean;
 }
 

@@ -54,7 +54,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return data as T;
 }
 
-import { User, AuthResponse } from '../types';
+import {
+  User,
+  AuthResponse,
+  AdminUserDTO,
+  AdminAtletaDTO,
+  AdminPartidaDTO,
+  AdminCaixaResponseDTO,
+  AdminPatrimonioDTO,
+} from '../types';
 
 export const api = {
   // 1. AUTENTICAÇÃO SANCTUM & GOOGLE GIS
@@ -331,6 +339,171 @@ export const api = {
       metricas: data.metricas,
       conferencia: p.conferencia_mala,
     };
+  },
+
+  // 10. PAINEL ADMINISTRATIVO ROOT (CRUDs Master)
+  admin: {
+    // 10.1 Usuários & Roles
+    async getUsers(): Promise<AdminUserDTO[]> {
+      return request<AdminUserDTO[]>('/admin/users');
+    },
+
+    async createUser(payload: {
+      name: string;
+      email: string;
+      phone?: string;
+      password: string;
+      role: string;
+    }) {
+      return request<{ message: string; user: AdminUserDTO }>('/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateUser(id: string, payload: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      role?: string;
+    }) {
+      return request<{ message: string; user: AdminUserDTO }>(`/admin/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async resetUserPassword(id: string, password: string) {
+      return request<{ message: string }>(`/admin/users/${id}/password`, {
+        method: 'PATCH',
+        body: JSON.stringify({ password }),
+      });
+    },
+
+    async deleteUser(id: string) {
+      return request<{ message: string }>(`/admin/users/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    // 10.2 Atletas & Elenco
+    async getAtletas(): Promise<AdminAtletaDTO[]> {
+      return request<AdminAtletaDTO[]>('/admin/atletas');
+    },
+
+    async createAtleta(payload: {
+      nome: string;
+      apelido?: string;
+      numero_camisa?: number;
+      posicao_principal: string;
+      posicao_secundaria?: string;
+      tipo_vinculo?: string;
+      user_id?: string;
+    }) {
+      return request<{ message: string; atleta: AdminAtletaDTO }>('/admin/atletas', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateAtleta(id: string, payload: Partial<AdminAtletaDTO>) {
+      return request<{ message: string; atleta: AdminAtletaDTO }>(`/admin/atletas/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async toggleAtletaStatus(id: string, ativo?: boolean) {
+      return request<{ message: string; atleta: AdminAtletaDTO }>(`/admin/atletas/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify(ativo !== undefined ? { ativo } : {}),
+      });
+    },
+
+    // 10.3 Partidas & Vestiário
+    async getPartidas(): Promise<AdminPartidaDTO[]> {
+      return request<AdminPartidaDTO[]>('/admin/partidas');
+    },
+
+    async createPartida(payload: {
+      adversario: string;
+      data_partida: string;
+      horario_inicio: string;
+      local_nome: string;
+      local_endereco?: string;
+      local_maps_url?: string;
+      cor_uniforme?: string;
+      limite_confirmados?: number;
+      valor_cota_centavos?: number;
+      meta_arrecadacao_centavos?: number;
+      chave_pix_cobranca?: string;
+    }) {
+      return request<{ message: string; partida: AdminPartidaDTO }>('/admin/partidas', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updatePartida(id: string, payload: Partial<AdminPartidaDTO>) {
+      return request<{ message: string; partida: AdminPartidaDTO }>(`/admin/partidas/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updatePartidaStatus(id: string, status: string) {
+      return request<{ message: string; partida: AdminPartidaDTO }>(`/admin/partidas/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    },
+
+    // 10.4 Caixa Geral
+    async getCaixa(): Promise<AdminCaixaResponseDTO> {
+      return request<AdminCaixaResponseDTO>('/admin/caixa');
+    },
+
+    async createCaixa(payload: {
+      tipo: 'entrada' | 'saida';
+      valor_centavos: number;
+      descricao: string;
+      partida_id?: string;
+    }) {
+      return request<{ message: string; movimentacao: any }>('/admin/caixa', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    // 10.5 Patrimônio & Almoxarifado
+    async getPatrimonio(): Promise<AdminPatrimonioDTO[]> {
+      return request<AdminPatrimonioDTO[]>('/admin/patrimonio');
+    },
+
+    async createPatrimonio(payload: {
+      nome: string;
+      categoria: string;
+      quantidade_total: number;
+      estado_conservacao: string;
+    }) {
+      return request<{ message: string; item: AdminPatrimonioDTO }>('/admin/patrimonio', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updatePatrimonio(id: string, payload: Partial<AdminPatrimonioDTO>) {
+      return request<{ message: string; item: AdminPatrimonioDTO }>(`/admin/patrimonio/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async deletePatrimonio(id: string) {
+      return request<{ message: string }>(`/admin/patrimonio/${id}`, {
+        method: 'DELETE',
+      });
+    },
   },
 };
 
