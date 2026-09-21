@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Evento } from '../types';
-import { Clock, AlertTriangle, CheckCircle2, ChevronRight, Activity, Flame, ShieldAlert, Sparkles } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle2, ChevronRight, Activity, Flame, ShieldAlert, Sparkles, ChevronDown } from 'lucide-react';
 
 interface VestiarioTimelineProps {
   evento: Evento;
@@ -10,6 +10,26 @@ export const VestiarioTimeline: React.FC<VestiarioTimelineProps> = ({ evento }) 
   const [selectedProtocolPhase, setSelectedProtocolPhase] = useState<number | null>(null);
   const [countdownMinutes, setCountdownMinutes] = useState(38); // Simulado em T-38 min (perto do marco crítico T-35)
   const [isLiveSimulating, setIsLiveSimulating] = useState(true);
+
+  // Estado do Toggle de expansão/recolhimento do protocolo com persistência
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('naprancheta_protocolo_expanded');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleExpanded = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('naprancheta_protocolo_expanded', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Efeito para contagem regressiva viva
   useEffect(() => {
@@ -35,15 +55,23 @@ export const VestiarioTimeline: React.FC<VestiarioTimelineProps> = ({ evento }) 
   }
 
   return (
-    <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-4 sm:p-5 shadow-sm text-zinc-100 mb-6">
-      {/* Header do Cronômetro */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-800/80">
-        <div>
+    <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-4 sm:p-5 shadow-sm text-zinc-100 mb-6 transition-all">
+      {/* Header do Cronômetro com Toggle */}
+      <div
+        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          isExpanded ? 'pb-4 border-b border-zinc-800/80' : ''
+        }`}
+      >
+        <div
+          onClick={toggleExpanded}
+          className="cursor-pointer select-none group"
+          title={isExpanded ? 'Clique para recolher o protocolo' : 'Clique para expandir o protocolo'}
+        >
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="inline-flex items-center justify-center p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition">
               <Clock className="w-4 h-4" />
             </span>
-            <h2 className="text-sm sm:text-base font-bold text-zinc-100 uppercase tracking-wider">
+            <h2 className="text-sm sm:text-base font-bold text-zinc-100 uppercase tracking-wider group-hover:text-emerald-300 transition">
               Protocolo Oficial de Vestiário (v2.0)
             </h2>
           </div>
@@ -52,19 +80,42 @@ export const VestiarioTimeline: React.FC<VestiarioTimelineProps> = ({ evento }) 
           </p>
         </div>
 
-        {/* Live Countdown Badge */}
-        <div className="flex items-center gap-2.5 bg-zinc-950/80 px-3 py-2 rounded-xl border border-zinc-800">
-          <div className="text-right">
-            <div className="text-[10px] uppercase font-bold text-zinc-400">Faltam para o jogo:</div>
-            <div className="text-sm font-extrabold text-zinc-100 font-mono">
-              T - {countdownMinutes} min
+        {/* Controles: Live Countdown Badge & Botão Toggle */}
+        <div className="flex items-center gap-2">
+          {/* Live Countdown Badge */}
+          <div className="flex items-center gap-2.5 bg-zinc-950/80 px-3 py-2 rounded-xl border border-zinc-800">
+            <div className="text-right">
+              <div className="text-[10px] uppercase font-bold text-zinc-400">Faltam para o jogo:</div>
+              <div className="text-sm font-extrabold text-zinc-100 font-mono">
+                T - {countdownMinutes} min
+              </div>
             </div>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${badgeColor}`}>
+              {currentMilestone}
+            </span>
           </div>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${badgeColor}`}>
-            {currentMilestone}
-          </span>
+
+          {/* Botão de Alternância (Toggle) */}
+          <button
+            type="button"
+            onClick={toggleExpanded}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 border border-zinc-700 transition active:scale-95 shrink-0"
+            title={isExpanded ? 'Recolher detalhes do protocolo' : 'Expandir detalhes do protocolo'}
+            aria-expanded={isExpanded}
+          >
+            <span className="hidden sm:inline">{isExpanded ? 'Recolher' : 'Ver Detalhes'}</span>
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${
+                isExpanded ? 'rotate-180 text-emerald-400' : 'text-zinc-400'
+              }`}
+            />
+          </button>
         </div>
       </div>
+
+      {/* Conteúdo Detalhado (Exibido apenas quando expandido) */}
+      {isExpanded && (
+        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
 
       {/* Regra do Atraso Banner */}
       <div className="mt-4 bg-red-500/10 border border-red-500/25 rounded-xl p-3.5 flex items-start gap-3 text-red-200">
@@ -198,6 +249,8 @@ export const VestiarioTimeline: React.FC<VestiarioTimelineProps> = ({ evento }) 
           </div>
         </div>
       </div>
+    </div>
+  )}
     </div>
   );
 };
