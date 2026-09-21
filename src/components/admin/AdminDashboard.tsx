@@ -24,6 +24,12 @@ import {
   Swords,
   Phone,
   Shirt,
+  Award,
+  Star,
+  Trophy,
+  Target,
+  Activity,
+  Minus,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import {
@@ -34,6 +40,8 @@ import {
   AdminPatrimonioDTO,
   AdminLocalDTO,
   AdminAdversarioDTO,
+  AdminScoutDTO,
+  AdminScoutLeaderboardDTO,
   NivelAcesso,
 } from '../../types';
 
@@ -41,7 +49,7 @@ interface AdminDashboardProps {
   onBackToMatch: () => void;
 }
 
-type AdminTab = 'users' | 'atletas' | 'partidas' | 'locais' | 'adversarios' | 'caixa' | 'patrimonio';
+type AdminTab = 'users' | 'atletas' | 'partidas' | 'locais' | 'adversarios' | 'caixa' | 'patrimonio' | 'scouts';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
@@ -139,6 +147,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     observacoes: '',
   });
 
+  // Estados dos Scouts
+  const [scouts, setScouts] = useState<AdminScoutDTO[]>([]);
+  const [scoutsLeaderboard, setScoutsLeaderboard] = useState<AdminScoutLeaderboardDTO[]>([]);
+  const [selectedScoutPartidaId, setSelectedScoutPartidaId] = useState<string>('');
+  const [scoutViewMode, setScoutViewMode] = useState<'partida' | 'leaderboard'>('partida');
+  const [modalScoutOpen, setModalScoutOpen] = useState(false);
+  const [editingScout, setEditingScout] = useState<AdminScoutDTO | null>(null);
+  const [scoutForm, setScoutForm] = useState({
+    partida_id: '',
+    atleta_id: '',
+    gols: 0,
+    assistencias: 0,
+    cartoes_amarelos: 0,
+    cartoes_vermelhos: 0,
+    gols_sofridos_goleiro: 0,
+    minutos_jogados: 90,
+    foi_mvp: false,
+  });
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setFeedback({ type, message });
     setTimeout(() => setFeedback(null), 4000);
@@ -175,6 +202,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
       } else if (tab === 'adversarios') {
         const data = await api.admin.getAdversarios();
         setAdversarios(data);
+      } else if (tab === 'scouts') {
+        const [scoutsData, leaderboardData, partidasData, atletasData] = await Promise.all([
+          api.admin.getScouts(),
+          api.admin.getScoutsLeaderboard(),
+          api.admin.getPartidas(),
+          api.admin.getAtletas(),
+        ]);
+        setScouts(scoutsData);
+        setScoutsLeaderboard(leaderboardData);
+        setPartidas(partidasData);
+        setAtletas(atletasData);
+        if (!selectedScoutPartidaId && partidasData.length > 0) {
+          setSelectedScoutPartidaId(partidasData[0].id);
+        }
       }
     } catch (err: any) {
       showToast(err.message || 'Falha ao carregar dados.', 'error');
@@ -490,6 +531,94 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     }
   };
 
+  // ==========================
+  // HANDLERS: SCOUTS & STATS
+  // ==========================
+  const handleSaveScout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scoutForm.partida_id || !scoutForm.atleta_id) {
+      showToast('Selecione a partida e o atleta.', 'error');
+      return;
+    }
+    try {
+      if (editingScout) {
+        await api.admin.updateScout(editingScout.id, {
+          gols: Number(scoutForm.gols),
+          assistencias: Number(scoutForm.assistencias),
+          cartoes_amarelos: Number(scoutForm.cartoes_amarelos),
+          cartoes_vermelhos: Number(scoutForm.cartoes_vermelhos),
+          gols_sofridos_goleiro: Number(scoutForm.gols_sofridos_goleiro),
+          minutos_jogados: Number(scoutForm.minutos_jogados),
+          foi_mvp: Boolean(scoutForm.foi_mvp),
+        });
+        showToast('Scout atualizado com sucesso.');
+      } else {
+        await api.admin.createScout({
+          partida_id: scoutForm.partida_id,
+          atleta_id: scoutForm.atleta_id,
+          gols: Number(scoutForm.gols),
+          assistencias: Number(scoutForm.assistencias),
+          cartoes_amarelos: Number(scoutForm.cartoes_amarelos),
+          cartoes_vermelhos: Number(scoutForm.cartoes_vermelhos),
+          gols_sofridos_goleiro: Number(scoutForm.gols_sofridos_goleiro),
+          minutos_jogados: Number(scoutForm.minutos_jogados),
+          foi_mvp: Boolean(scoutForm.foi_mvp),
+        });
+        showToast('Scout registrado com sucesso.');
+      }
+      setModalScoutOpen(false);
+      loadData('scouts');
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao salvar scout.', 'error');
+    }
+  };
+
+  const handleQuickScoutDelta = async (
+    scout: AdminScoutDTO,
+    field: 'gols' | 'assistencias' | 'cartoes_amarelos' | 'cartoes_vermelhos',
+    delta: number
+  ) => {
+    const novoValor = Math.max(0, (scout[field] || 0) + delta);
+    try {
+      await api.admin.updateScout(scout.id, {
+        [field]: novoValor,
+      });
+      // Atualização otimista local
+      setScouts((prev) =>
+        prev.map((s) => (s.id === scout.id ? { ...s, [field]: novoValor } : s))
+      );
+      api.admin.getScoutsLeaderboard().then(setScoutsLeaderboard).catch(() => {});
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao atualizar scout.', 'error');
+      loadData('scouts');
+    }
+  };
+
+  const handleToggleScoutMvp = async (scout: AdminScoutDTO) => {
+    const novoMvp = !scout.foi_mvp;
+    try {
+      await api.admin.updateScout(scout.id, {
+        foi_mvp: novoMvp,
+      });
+      showToast(novoMvp ? 'Craque da partida eleito!' : 'Eleição de MVP removida.');
+      loadData('scouts');
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao atualizar MVP.', 'error');
+    }
+  };
+
+  const handleDeleteScout = async (scout: AdminScoutDTO) => {
+    const atletaNome = scout.atleta?.nome || 'Atleta';
+    if (!window.confirm(`Tem certeza que deseja remover o scout de "${atletaNome}" nesta partida?`)) return;
+    try {
+      await api.admin.deleteScout(scout.id);
+      showToast('Scout removido com sucesso.');
+      loadData('scouts');
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao excluir scout.', 'error');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-16">
       {/* Top Bar Administrativa */}
@@ -566,6 +695,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
             { id: 'adversarios', label: 'Adversários', icon: Swords, count: adversarios.length },
             { id: 'caixa', label: 'Caixa Geral', icon: DollarSign },
             { id: 'patrimonio', label: 'Patrimônio', icon: Package, count: patrimonio.length },
+            { id: 'scouts', label: 'Scouts & Stats', icon: Award, count: scouts.length },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1560,6 +1690,508 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                   );
                 })}
             </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* ABA 8: SCOUTS & ESTATÍSTICAS */}
+        {/* ========================================================= */}
+        {activeTab === 'scouts' && (
+          <div className="mt-6 space-y-4">
+            {/* Barra de Controle de Scout */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/60 p-3.5 rounded-2xl border border-zinc-800">
+              <div className="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                <button
+                  onClick={() => setScoutViewMode('partida')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    scoutViewMode === 'partida'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>Súmula por Partida</span>
+                </button>
+                <button
+                  onClick={() => setScoutViewMode('leaderboard')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    scoutViewMode === 'leaderboard'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>Leaderboard Geral ({scoutsLeaderboard.length})</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Filtrar atletas..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingScout(null);
+                    setScoutForm({
+                      partida_id: selectedScoutPartidaId || (partidas[0]?.id || ''),
+                      atleta_id: atletas[0]?.id || '',
+                      gols: 0,
+                      assistencias: 0,
+                      cartoes_amarelos: 0,
+                      cartoes_vermelhos: 0,
+                      gols_sofridos_goleiro: 0,
+                      minutos_jogados: 90,
+                      foi_mvp: false,
+                    });
+                    setModalScoutOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Lançar Scout</span>
+                </button>
+              </div>
+            </div>
+
+            {/* MODO 1: SÚMULA POR PARTIDA */}
+            {scoutViewMode === 'partida' && (
+              <div className="space-y-4">
+                {/* Seletor de Partida */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      Selecione a Partida para Lançar ou Auditar Súmula
+                    </label>
+                    <select
+                      value={selectedScoutPartidaId}
+                      onChange={(e) => setSelectedScoutPartidaId(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 font-medium"
+                    >
+                      {partidas.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          vs {p.adversario} — {p.data_partida} ({p.status?.toUpperCase() || 'AGENDADA'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Estatísticas Rápidas da Partida */}
+                  {(() => {
+                    const scoutsDaPartida = scouts.filter((s) => s.partida_id === selectedScoutPartidaId);
+                    const totalGols = scoutsDaPartida.reduce((acc, s) => acc + (s.gols || 0), 0);
+                    const totalAssists = scoutsDaPartida.reduce((acc, s) => acc + (s.assistencias || 0), 0);
+                    const totalAmarelos = scoutsDaPartida.reduce((acc, s) => acc + (s.cartoes_amarelos || 0), 0);
+                    const totalVermelhos = scoutsDaPartida.reduce((acc, s) => acc + (s.cartoes_vermelhos || 0), 0);
+                    const mvpScout = scoutsDaPartida.find((s) => s.foi_mvp);
+
+                    return (
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-center">
+                          <p className="text-[10px] text-zinc-500 font-semibold">GOLS</p>
+                          <p className="text-sm font-black text-emerald-400">{totalGols}</p>
+                        </div>
+                        <div className="px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-center">
+                          <p className="text-[10px] text-zinc-500 font-semibold">ASSISTS</p>
+                          <p className="text-sm font-black text-blue-400">{totalAssists}</p>
+                        </div>
+                        <div className="px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-center">
+                          <p className="text-[10px] text-zinc-500 font-semibold">CARTÕES</p>
+                          <p className="text-sm font-black text-amber-400">
+                            {totalAmarelos} <span className="text-red-400">/ {totalVermelhos}</span>
+                          </p>
+                        </div>
+                        <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2">
+                          <Star className={`w-4 h-4 ${mvpScout ? 'text-amber-400 fill-amber-400' : 'text-zinc-600'}`} />
+                          <div>
+                            <p className="text-[9px] text-amber-300/70 font-bold uppercase tracking-wider">CRAQUE DO JOGO</p>
+                            <p className="text-xs font-black text-amber-300">
+                              {mvpScout?.atleta?.nome || 'Nenhum eleito'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Grid de Atletas da Partida */}
+                {(() => {
+                  const scoutsDaPartida = scouts
+                    .filter((s) => s.partida_id === selectedScoutPartidaId)
+                    .filter((s) => {
+                      if (!searchQuery) return true;
+                      const q = searchQuery.toLowerCase();
+                      const nome = s.atleta?.nome?.toLowerCase() || '';
+                      const apelido = s.atleta?.apelido?.toLowerCase() || '';
+                      return nome.includes(q) || apelido.includes(q);
+                    });
+
+                  if (scoutsDaPartida.length === 0) {
+                    return (
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+                        <Award className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
+                        <h4 className="text-sm font-bold text-zinc-300">Nenhum scout lançado para esta partida</h4>
+                        <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                          Comece lançando os números individuais dos atletas que jogaram este confronto.
+                        </p>
+                        <button
+                          onClick={() => {
+                            setEditingScout(null);
+                            setScoutForm({
+                              partida_id: selectedScoutPartidaId || (partidas[0]?.id || ''),
+                              atleta_id: atletas[0]?.id || '',
+                              gols: 0,
+                              assistencias: 0,
+                              cartoes_amarelos: 0,
+                              cartoes_vermelhos: 0,
+                              gols_sofridos_goleiro: 0,
+                              minutos_jogados: 90,
+                              foi_mvp: false,
+                            });
+                            setModalScoutOpen(true);
+                          }}
+                          className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Adicionar Atleta à Súmula</span>
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {scoutsDaPartida.map((s) => (
+                        <div
+                          key={s.id}
+                          className={`bg-zinc-900 border rounded-2xl p-4 transition shadow-sm flex flex-col justify-between ${
+                            s.foi_mvp
+                              ? 'border-amber-500/50 bg-gradient-to-br from-zinc-900 via-zinc-900 to-amber-950/20 ring-1 ring-amber-500/30'
+                              : 'border-zinc-800 hover:border-zinc-700'
+                          }`}
+                        >
+                          <div>
+                            {/* Topo do Card */}
+                            <div className="flex items-center justify-between gap-2 mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="w-7 h-7 rounded-lg bg-zinc-800 text-zinc-200 border border-zinc-700 flex items-center justify-center font-black text-xs">
+                                  {s.atleta?.numero_camisa || '-'}
+                                </span>
+                                <div>
+                                  <h4 className="font-bold text-xs sm:text-sm text-zinc-100 flex items-center gap-1.5">
+                                    <span>{s.atleta?.nome || 'Atleta'}</span>
+                                    {s.atleta?.apelido && (
+                                      <span className="text-[11px] text-zinc-400 font-normal">({s.atleta.apelido})</span>
+                                    )}
+                                  </h4>
+                                  <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wide">
+                                    {s.atleta?.posicao_principal || 'Linha'} • {s.minutos_jogados || 0} min
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Botão de Craque / MVP com exclusividade */}
+                              <button
+                                onClick={() => handleToggleScoutMvp(s)}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold border transition ${
+                                  s.foi_mvp
+                                    ? 'bg-amber-400 text-zinc-950 border-amber-300 shadow-sm shadow-amber-500/20 scale-105'
+                                    : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 border-zinc-700'
+                                }`}
+                                title={s.foi_mvp ? 'Remover Craque' : 'Eleger Craque da Partida (Exclusivo)'}
+                              >
+                                <Star className={`w-3.5 h-3.5 ${s.foi_mvp ? 'fill-zinc-950 text-zinc-950' : 'text-zinc-500'}`} />
+                                <span>{s.foi_mvp ? 'CRAQUE' : 'MVP'}</span>
+                              </button>
+                            </div>
+
+                            {/* Controles de Estatísticas com Steppers */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/70 mb-3">
+                              {/* Gols */}
+                              <div className="text-center">
+                                <span className="text-[10px] text-zinc-400 font-bold block mb-1">⚽ Gols</span>
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'gols', -1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-sm font-black text-emerald-400 w-5 text-center">
+                                    {s.gols || 0}
+                                  </span>
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'gols', 1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Assistências */}
+                              <div className="text-center">
+                                <span className="text-[10px] text-zinc-400 font-bold block mb-1">🎯 Assists</span>
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'assistencias', -1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-sm font-black text-blue-400 w-5 text-center">
+                                    {s.assistencias || 0}
+                                  </span>
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'assistencias', 1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Cartão Amarelo */}
+                              <div className="text-center">
+                                <span className="text-[10px] text-zinc-400 font-bold block mb-1">🟨 Amarelo</span>
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'cartoes_amarelos', -1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-sm font-black text-amber-400 w-5 text-center">
+                                    {s.cartoes_amarelos || 0}
+                                  </span>
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'cartoes_amarelos', 1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Cartão Vermelho */}
+                              <div className="text-center">
+                                <span className="text-[10px] text-zinc-400 font-bold block mb-1">🟥 Vermelho</span>
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'cartoes_vermelhos', -1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-sm font-black text-red-400 w-5 text-center">
+                                    {s.cartoes_vermelhos || 0}
+                                  </span>
+                                  <button
+                                    onClick={() => handleQuickScoutDelta(s, 'cartoes_vermelhos', 1)}
+                                    className="w-5 h-5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs font-black transition"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Ações do Card */}
+                          <div className="pt-2.5 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
+                            <span className="text-[10px] text-zinc-500">
+                              {s.gols_sofridos_goleiro ? `Gols sofridos: ${s.gols_sofridos_goleiro}` : ''}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingScout(s);
+                                  setScoutForm({
+                                    partida_id: s.partida_id,
+                                    atleta_id: s.atleta_id,
+                                    gols: s.gols || 0,
+                                    assistencias: s.assistencias || 0,
+                                    cartoes_amarelos: s.cartoes_amarelos || 0,
+                                    cartoes_vermelhos: s.cartoes_vermelhos || 0,
+                                    gols_sofridos_goleiro: s.gols_sofridos_goleiro || 0,
+                                    minutos_jogados: s.minutos_jogados || 90,
+                                    foi_mvp: Boolean(s.foi_mvp),
+                                  });
+                                  setModalScoutOpen(true);
+                                }}
+                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-emerald-400 transition"
+                                title="Editar Scout Completo"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteScout(s)}
+                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-red-400 transition"
+                                title="Excluir Scout"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* MODO 2: LEADERBOARD GERAL */}
+            {scoutViewMode === 'leaderboard' && (
+              <div className="space-y-4">
+                {/* 4 Cards de Destaque no Topo */}
+                {(() => {
+                  const artilheiro = [...scoutsLeaderboard].sort((a, b) => b.gols - a.gols)[0];
+                  const garcom = [...scoutsLeaderboard].sort((a, b) => b.assistencias - a.assistencias)[0];
+                  const reiMvp = [...scoutsLeaderboard].sort((a, b) => b.mvps - a.mvps)[0];
+                  const minutagem = [...scoutsLeaderboard].sort((a, b) => b.minutos - a.minutos)[0];
+
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">⚽ Artilheiro</p>
+                          <h4 className="font-bold text-sm text-zinc-100 mt-1">{artilheiro?.atleta_nome || 'Nenhum'}</h4>
+                          <p className="text-[11px] text-zinc-500">{artilheiro?.posicao} • {artilheiro?.jogos || 0} jogos</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-black text-emerald-400">{artilheiro?.gols || 0}</span>
+                          <span className="text-[10px] text-zinc-500 block">gols</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">🎯 Líder em Assists</p>
+                          <h4 className="font-bold text-sm text-zinc-100 mt-1">{garcom?.atleta_nome || 'Nenhum'}</h4>
+                          <p className="text-[11px] text-zinc-500">{garcom?.posicao} • {garcom?.jogos || 0} jogos</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-black text-blue-400">{garcom?.assistencias || 0}</span>
+                          <span className="text-[10px] text-zinc-500 block">passes</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">⭐ Rei do MVP</p>
+                          <h4 className="font-bold text-sm text-zinc-100 mt-1">{reiMvp?.atleta_nome || 'Nenhum'}</h4>
+                          <p className="text-[11px] text-zinc-500">{reiMvp?.posicao} • {reiMvp?.jogos || 0} jogos</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-black text-amber-400">{reiMvp?.mvps || 0}</span>
+                          <span className="text-[10px] text-zinc-500 block">eleições</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">⏱️ Mais Minutos</p>
+                          <h4 className="font-bold text-sm text-zinc-100 mt-1">{minutagem?.atleta_nome || 'Nenhum'}</h4>
+                          <p className="text-[11px] text-zinc-500">{minutagem?.posicao} • {minutagem?.jogos || 0} jogos</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-black text-purple-400">{minutagem?.minutos || 0}</span>
+                          <span className="text-[10px] text-zinc-500 block">minutos</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Tabela Completa do Leaderboard */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-zinc-300">
+                      <thead className="bg-zinc-950/80 text-zinc-400 font-semibold border-b border-zinc-800">
+                        <tr>
+                          <th className="py-3 px-3.5 text-center w-12">#</th>
+                          <th className="py-3 px-3.5">Atleta</th>
+                          <th className="py-3 px-3.5 text-center">Posição</th>
+                          <th className="py-3 px-3.5 text-center">Jogos</th>
+                          <th className="py-3 px-3.5 text-center">⚽ Gols</th>
+                          <th className="py-3 px-3.5 text-center">🎯 Assists</th>
+                          <th className="py-3 px-3.5 text-center">Participações</th>
+                          <th className="py-3 px-3.5 text-center">🟨 / 🟥</th>
+                          <th className="py-3 px-3.5 text-center">⭐ MVPs</th>
+                          <th className="py-3 px-3.5 text-center">Minutos</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800/60">
+                        {scoutsLeaderboard
+                          .filter((item) => {
+                            if (!searchQuery) return true;
+                            const q = searchQuery.toLowerCase();
+                            return (
+                              item.atleta_nome.toLowerCase().includes(q) ||
+                              item.atleta_apelido.toLowerCase().includes(q) ||
+                              item.posicao.toLowerCase().includes(q)
+                            );
+                          })
+                          .map((item, idx) => (
+                            <tr key={item.atleta_id} className="hover:bg-zinc-800/40 transition">
+                              <td className="py-3 px-3.5 text-center font-bold text-zinc-500">
+                                {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                              </td>
+                              <td className="py-3 px-3.5">
+                                <div className="font-bold text-zinc-100 flex items-center gap-1.5">
+                                  <span>{item.atleta_nome}</span>
+                                  {item.atleta_apelido && (
+                                    <span className="text-zinc-500 font-normal">({item.atleta_apelido})</span>
+                                  )}
+                                  {item.numero_camisa && (
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 font-black">
+                                      #{item.numero_camisa}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 px-3.5 text-center">
+                                <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 font-semibold text-[10px]">
+                                  {item.posicao}
+                                </span>
+                              </td>
+                              <td className="py-3 px-3.5 text-center font-bold text-zinc-300">{item.jogos}</td>
+                              <td className="py-3 px-3.5 text-center font-black text-emerald-400">{item.gols}</td>
+                              <td className="py-3 px-3.5 text-center font-black text-blue-400">{item.assistencias}</td>
+                              <td className="py-3 px-3.5 text-center font-black text-zinc-100">
+                                {item.participacoes_gols}
+                              </td>
+                              <td className="py-3 px-3.5 text-center font-semibold text-zinc-400">
+                                <span className="text-amber-400">{item.cartoes_amarelos}</span> /{' '}
+                                <span className="text-red-400">{item.cartoes_vermelhos}</span>
+                              </td>
+                              <td className="py-3 px-3.5 text-center">
+                                {item.mvps > 0 ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black">
+                                    <Star className="w-3 h-3 fill-amber-300" />
+                                    {item.mvps}
+                                  </span>
+                                ) : (
+                                  <span className="text-zinc-600">-</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-3.5 text-center text-zinc-400">{item.minutos}'</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -2643,6 +3275,184 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
                 >
                   {editingAdversario ? 'Salvar Alterações' : 'Cadastrar Adversário'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Scout */}
+      {modalScoutOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-5 shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-zinc-100">
+                    {editingScout ? 'Editar Scout Individual' : 'Lançar Scout de Partida'}
+                  </h3>
+                  <p className="text-[11px] text-zinc-400">Súmula estatística oficial de atleta</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalScoutOpen(false)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveScout} className="space-y-4">
+              {/* Partida & Atleta */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Partida</label>
+                  <select
+                    required
+                    disabled={Boolean(editingScout)}
+                    value={scoutForm.partida_id}
+                    onChange={(e) => setScoutForm({ ...scoutForm, partida_id: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 disabled:opacity-60"
+                  >
+                    <option value="">Selecione uma partida...</option>
+                    {partidas.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        vs {p.adversario} — {p.data_partida}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Atleta</label>
+                  <select
+                    required
+                    disabled={Boolean(editingScout)}
+                    value={scoutForm.atleta_id}
+                    onChange={(e) => setScoutForm({ ...scoutForm, atleta_id: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 disabled:opacity-60"
+                  >
+                    <option value="">Selecione um atleta...</option>
+                    {atletas.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.numero_camisa ? `#${a.numero_camisa} ` : ''}{a.nome} {a.apelido ? `(${a.apelido})` : ''} - {a.posicao_principal}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Estatísticas Principais (Grid 2x3) */}
+              <div className="bg-zinc-950/60 p-3.5 rounded-xl border border-zinc-800/80 space-y-3">
+                <span className="text-[11px] font-bold text-zinc-300 block uppercase tracking-wider">
+                  Métricas da Partida
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">⚽ Gols Marcados</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={scoutForm.gols}
+                      onChange={(e) => setScoutForm({ ...scoutForm, gols: Number(e.target.value) })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">🎯 Assistências</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={scoutForm.assistencias}
+                      onChange={(e) => setScoutForm({ ...scoutForm, assistencias: Number(e.target.value) })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-blue-400 font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">⏱️ Minutos Jogados</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={scoutForm.minutos_jogados}
+                      onChange={(e) => setScoutForm({ ...scoutForm, minutos_jogados: Number(e.target.value) })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">🟨 Cartões Amarelos</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={scoutForm.cartoes_amarelos}
+                      onChange={(e) => setScoutForm({ ...scoutForm, cartoes_amarelos: Number(e.target.value) })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-amber-400 font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">🟥 Cartões Vermelhos</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={scoutForm.cartoes_vermelhos}
+                      onChange={(e) => setScoutForm({ ...scoutForm, cartoes_vermelhos: Number(e.target.value) })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-red-400 font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-400 mb-1">🧤 Gols Sofridos (Goleiro)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={scoutForm.gols_sofridos_goleiro}
+                      onChange={(e) => setScoutForm({ ...scoutForm, gols_sofridos_goleiro: Number(e.target.value) })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-300 font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Destaque MVP com Exclusividade */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="scoutFoiMvp"
+                  checked={scoutForm.foi_mvp}
+                  onChange={(e) => setScoutForm({ ...scoutForm, foi_mvp: e.target.checked })}
+                  className="mt-0.5 rounded border-zinc-700 bg-zinc-900 text-amber-500 focus:ring-amber-500 w-4 h-4"
+                />
+                <label htmlFor="scoutFoiMvp" className="cursor-pointer">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-amber-300">
+                    <Star className={`w-3.5 h-3.5 ${scoutForm.foi_mvp ? 'fill-amber-300' : ''}`} />
+                    <span>Eleger como Craque da Partida (MVP)</span>
+                  </div>
+                  <p className="text-[10px] text-amber-300/70 mt-0.5">
+                    Regra estrita: Ao marcar este atleta como MVP, qualquer outro atleta eleito nesta mesma partida terá o título transferido automaticamente.
+                  </p>
+                </label>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setModalScoutOpen(false)}
+                  className="px-3 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-zinc-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
+                >
+                  {editingScout ? 'Salvar Alterações' : 'Registrar Scout'}
                 </button>
               </div>
             </form>

@@ -66,6 +66,8 @@ import {
   AdminLocalDTO,
   Adversario,
   AdminAdversarioDTO,
+  AdminScoutDTO,
+  AdminScoutLeaderboardDTO,
 } from '../types';
 
 export const api = {
@@ -591,6 +593,61 @@ export const api = {
         method: 'PATCH',
       });
     },
+
+    // 10.8 Scouts & Estatísticas
+    async getScouts(params?: { partida_id?: string; atleta_id?: string }): Promise<AdminScoutDTO[]> {
+      const query = new URLSearchParams();
+      if (params?.partida_id) query.append('partida_id', params.partida_id);
+      if (params?.atleta_id) query.append('atleta_id', params.atleta_id);
+      const qs = query.toString();
+      return request<AdminScoutDTO[]>(`/admin/scouts${qs ? `?${qs}` : ''}`);
+    },
+
+    async getScoutsLeaderboard(): Promise<AdminScoutLeaderboardDTO[]> {
+      return request<AdminScoutLeaderboardDTO[]>('/admin/scouts/leaderboard');
+    },
+
+    async createScout(payload: {
+      partida_id: string;
+      atleta_id: string;
+      gols?: number;
+      assistencias?: number;
+      cartoes_amarelos?: number;
+      cartoes_vermelhos?: number;
+      gols_sofridos_goleiro?: number;
+      minutos_jogados?: number;
+      foi_mvp?: boolean;
+    }) {
+      return request<{ message: string; scout: AdminScoutDTO }>('/admin/scouts', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateScout(
+      id: string,
+      payload: {
+        gols?: number;
+        assistencias?: number;
+        cartoes_amarelos?: number;
+        cartoes_vermelhos?: number;
+        gols_sofridos_goleiro?: number;
+        minutos_jogados?: number;
+        foi_mvp?: boolean;
+      }
+    ) {
+      return request<{ message: string; scout: AdminScoutDTO }>(`/admin/scouts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async deleteScout(id: string) {
+      return request<{ message: string }>(`/admin/scouts/${id}`, {
+        method: 'DELETE',
+      });
+    },
   },
 };
+
 

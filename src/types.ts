@@ -231,4 +231,50 @@ export interface AdminPatrimonioDTO {
   ativo?: boolean;
 }
 
+export interface AdminScoutDTO {
+  id: string;
+  partida_id: string;
+  atleta_id: string;
+  gols: number;
+  assistencias: number;
+  cartoes_amarelos: number;
+  cartoes_vermelhos: number;
+  gols_sofridos_goleiro: number;
+  minutos_jogados: number;
+  foi_mvp: boolean;
+  created_at?: string;
+  updated_at?: string;
+  atleta?: {
+    id: string;
+    nome: string;
+    apelido?: string;
+    numero_camisa?: number;
+    posicao_principal?: string;
+  };
+  partida?: {
+    id: string;
+    adversario?: string;
+    data_partida: string;
+    local_nome?: string;
+  };
+}
+
+export interface AdminScoutLeaderboardDTO {
+  atleta_id: string;
+  atleta_nome: string;
+  atleta_apelido: string;
+  numero_camisa?: number;
+  posicao: string;
+  jogos: number;
+  gols: number;
+  assistencias: number;
+  participacoes_gols: number;
+  cartoes_amarelos: number;
+  cartoes_vermelhos: number;
+  mvps: number;
+  minutos: number;
+  gols_sofridos: number;
+}
+
+
 

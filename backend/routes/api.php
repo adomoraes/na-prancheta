@@ -108,4 +108,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:root'])->group(functio
     Route::post('/adversarios', [AdminController::class, 'storeAdversario']);
     Route::put('/adversarios/{id}', [AdminController::class, 'updateAdversario']);
     Route::patch('/adversarios/{id}/status', [AdminController::class, 'toggleAdversarioStatus']);
+
+    // 4.8 Scouts & Estatísticas
+    Route::get('/scouts', [AdminController::class, 'indexScouts']);
+    Route::get('/scouts/leaderboard', [AdminController::class, 'leaderboardScouts']);
+    Route::post('/scouts', [AdminController::class, 'storeScout']);
+    Route::put('/scouts/{id}', [AdminController::class, 'updateScout']);
+    Route::delete('/scouts/{id}', [AdminController::class, 'deleteScout']);
 });
