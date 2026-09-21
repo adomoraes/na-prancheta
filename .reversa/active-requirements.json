@@ -4,12 +4,13 @@
   "feature-id": "005",
   "short-name": "numero-calcado-atleta",
   "started-at": "2026-09-21T07:16:00Z",
-  "current-stage": "coding",
+  "current-stage": "sync",
   "stages-completed": [
     "requirements",
     "plan",
     "to-do",
-    "coding"
+    "coding",
+    "sync"
   ],
   "paused-features": []
 }
