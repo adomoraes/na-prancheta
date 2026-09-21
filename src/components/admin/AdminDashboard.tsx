@@ -19,6 +19,8 @@ import {
   TrendingUp,
   TrendingDown,
   X,
+  MapPin,
+  ExternalLink,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import {
@@ -27,6 +29,7 @@ import {
   AdminPartidaDTO,
   AdminCaixaResponseDTO,
   AdminPatrimonioDTO,
+  AdminLocalDTO,
   NivelAcesso,
 } from '../../types';
 
@@ -34,7 +37,7 @@ interface AdminDashboardProps {
   onBackToMatch: () => void;
 }
 
-type AdminTab = 'users' | 'atletas' | 'partidas' | 'caixa' | 'patrimonio';
+type AdminTab = 'users' | 'atletas' | 'partidas' | 'caixa' | 'patrimonio' | 'locais';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
@@ -47,6 +50,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
   const [partidas, setPartidas] = useState<AdminPartidaDTO[]>([]);
   const [caixaData, setCaixaData] = useState<AdminCaixaResponseDTO | null>(null);
   const [patrimonio, setPatrimonio] = useState<AdminPatrimonioDTO[]>([]);
+  const [locais, setLocais] = useState<AdminLocalDTO[]>([]);
 
   // Filtros
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -77,8 +81,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     adversario: '',
     data_partida: new Date().toISOString().split('T')[0],
     horario_inicio: '19:30',
+    local_id: '',
     local_nome: 'Arena Fut7',
     local_endereco: 'Rua do Campo, 100',
+    local_maps_url: '',
     limite_confirmados: 14,
     valor_cota_centavos: 2500,
     meta_arrecadacao_centavos: 35000,
@@ -100,6 +106,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     estado_conservacao: 'novo' as 'novo' | 'bom' | 'regular' | 'desgastado',
   });
 
+  const [modalLocalOpen, setModalLocalOpen] = useState(false);
+  const [editingLocal, setEditingLocal] = useState<AdminLocalDTO | null>(null);
+  const [localForm, setLocalForm] = useState({
+    nome: '',
+    endereco: '',
+    maps_url: '',
+    tipo_piso: 'Grama Sintética',
+    observacoes: '',
+  });
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setFeedback({ type, message });
     setTimeout(() => setFeedback(null), 4000);
@@ -116,14 +132,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         const data = await api.admin.getAtletas();
         setAtletas(data);
       } else if (tab === 'partidas') {
-        const data = await api.admin.getPartidas();
-        setPartidas(data);
+        const [partidasData, locaisData] = await Promise.all([
+          api.admin.getPartidas(),
+          api.admin.getLocais(),
+        ]);
+        setPartidas(partidasData);
+        setLocais(locaisData);
       } else if (tab === 'caixa') {
         const data = await api.admin.getCaixa();
         setCaixaData(data);
       } else if (tab === 'patrimonio') {
         const data = await api.admin.getPatrimonio();
         setPatrimonio(data);
+      } else if (tab === 'locais') {
+        const data = await api.admin.getLocais();
+        setLocais(data);
       }
     } catch (err: any) {
       showToast(err.message || 'Falha ao carregar dados.', 'error');
@@ -250,8 +273,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         adversario: partidaForm.adversario,
         data_partida: partidaForm.data_partida,
         horario_inicio: partidaForm.horario_inicio,
+        local_id: partidaForm.local_id || undefined,
         local_nome: partidaForm.local_nome,
         local_endereco: partidaForm.local_endereco,
+        local_maps_url: partidaForm.local_maps_url || undefined,
         limite_confirmados: Number(partidaForm.limite_confirmados),
         valor_cota_centavos: Number(partidaForm.valor_cota_centavos),
         meta_arrecadacao_centavos: Number(partidaForm.meta_arrecadacao_centavos),
@@ -340,6 +365,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     }
   };
 
+  // ==========================
+  // HANDLERS: LOCAIS & CAMPOS
+  // ==========================
+  const handleSaveLocal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingLocal) {
+        await api.admin.updateLocal(editingLocal.id, {
+          nome: localForm.nome,
+          endereco: localForm.endereco || undefined,
+          maps_url: localForm.maps_url || undefined,
+          tipo_piso: localForm.tipo_piso,
+          observacoes: localForm.observacoes || undefined,
+        });
+        showToast('Local atualizado com sucesso.');
+      } else {
+        await api.admin.createLocal({
+          nome: localForm.nome,
+          endereco: localForm.endereco || undefined,
+          maps_url: localForm.maps_url || undefined,
+          tipo_piso: localForm.tipo_piso,
+          observacoes: localForm.observacoes || undefined,
+        });
+        showToast('Local e campo cadastrados com sucesso.');
+      }
+      setModalLocalOpen(false);
+      loadData('locais');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleToggleLocalStatus = async (local: AdminLocalDTO) => {
+    const acao = local.ativo ? 'desativar' : 'reativar';
+    if (!window.confirm(`Deseja ${acao} o local "${local.nome}"? O histórico de partidas será preservado.`)) return;
+    try {
+      await api.admin.toggleLocalStatus(local.id);
+      showToast(`Local ${!local.ativo ? 'reativado' : 'desativado'} com sucesso.`);
+      loadData('locais');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-16">
       {/* Top Bar Administrativa */}
@@ -412,6 +481,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
             { id: 'users', label: 'Usuários & Perfis', icon: KeyRound, count: users.length },
             { id: 'atletas', label: 'Elenco & Atletas', icon: Users, count: atletas.length },
             { id: 'partidas', label: 'Partidas & Agenda', icon: Calendar, count: partidas.length },
+            { id: 'locais', label: 'Locais & Campos', icon: MapPin, count: locais.length },
             { id: 'caixa', label: 'Caixa Geral', icon: DollarSign },
             { id: 'patrimonio', label: 'Patrimônio', icon: Package, count: patrimonio.length },
           ].map((tab) => {
@@ -784,6 +854,156 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* ABA: LOCAIS & CAMPOS */}
+        {/* ========================================================= */}
+        {activeTab === 'locais' && (
+          <div className="mt-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/60 p-3.5 rounded-2xl border border-zinc-800">
+              <div className="flex items-center gap-2.5 flex-1 max-w-md">
+                <div className="relative w-full">
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Buscar local por nome, bairro ou endereço..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingLocal(null);
+                  setLocalForm({
+                    nome: '',
+                    endereco: '',
+                    maps_url: '',
+                    tipo_piso: 'Grama Sintética',
+                    observacoes: '',
+                  });
+                  setModalLocalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Local / Campo</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {locais
+                .filter(
+                  (l) =>
+                    l.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (l.endereco && l.endereco.toLowerCase().includes(searchQuery.toLowerCase()))
+                )
+                .map((loc) => (
+                  <div
+                    key={loc.id}
+                    className={`bg-zinc-900 border rounded-2xl p-4 flex flex-col justify-between shadow-sm transition ${
+                      loc.ativo ? 'border-zinc-800 hover:border-zinc-700' : 'border-red-900/30 opacity-70 bg-zinc-950'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {loc.tipo_piso || 'Grama Sintética'}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            loc.ativo
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                              : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                          }`}
+                        >
+                          {loc.ativo ? 'ATIVO' : 'DESATIVADO'}
+                        </span>
+                      </div>
+
+                      <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>{loc.nome}</span>
+                      </h3>
+
+                      {loc.endereco && (
+                        <p className="text-xs text-zinc-400 mt-1 pl-5.5 leading-relaxed">
+                          {loc.endereco}
+                        </p>
+                      )}
+
+                      {loc.maps_url && (
+                        <a
+                          href={loc.maps_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 mt-2 pl-5.5 transition font-medium"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Abrir no Google Maps / Waze</span>
+                        </a>
+                      )}
+
+                      {loc.observacoes && (
+                        <p className="text-[11px] text-zinc-500 mt-2 bg-zinc-950/60 p-2 rounded-lg border border-zinc-800/80 italic">
+                          "{loc.observacoes}"
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between">
+                      <span className="text-[11px] text-zinc-500">
+                        {loc.partidas_count !== undefined
+                          ? `${loc.partidas_count} partida(s) vinculada(s)`
+                          : 'Pronto para agendamento'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            setEditingLocal(loc);
+                            setLocalForm({
+                              nome: loc.nome,
+                              endereco: loc.endereco || '',
+                              maps_url: loc.maps_url || '',
+                              tipo_piso: loc.tipo_piso || 'Grama Sintética',
+                              observacoes: loc.observacoes || '',
+                            });
+                            setModalLocalOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition"
+                          title="Editar Local"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleToggleLocalStatus(loc)}
+                          className={`p-1.5 rounded-lg transition ${
+                            loc.ativo
+                              ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400'
+                              : 'bg-emerald-950/60 text-emerald-400 hover:bg-emerald-900/60'
+                          }`}
+                          title={loc.ativo ? 'Desativar Local' : 'Reativar Local'}
+                        >
+                          <Power className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {locais.length === 0 && (
+              <div className="text-center py-12 bg-zinc-900/30 rounded-2xl border border-zinc-800 text-zinc-500">
+                <MapPin className="w-8 h-8 mx-auto mb-2 text-zinc-600" />
+                <p className="text-xs font-semibold">Nenhum local ou campo cadastrado ainda.</p>
+                <p className="text-[11px] mt-1 text-zinc-600">
+                  Clique em "Novo Local / Campo" para cadastrar a arena ou sede do time.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -1259,14 +1479,81 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Local / Campo</label>
-                <input
-                  type="text"
-                  required
-                  value={partidaForm.local_nome}
-                  onChange={(e) => setPartidaForm({ ...partidaForm, local_nome: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-semibold text-zinc-400">
+                    Selecionar Campo / Local Cadastrado
+                  </label>
+                  {locais.length > 0 && (
+                    <span className="text-[10px] text-emerald-400 font-medium">Preenchimento automático</span>
+                  )}
+                </div>
+                <select
+                  value={partidaForm.local_id}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    const selected = locais.find((l) => l.id === selId);
+                    if (selected) {
+                      setPartidaForm({
+                        ...partidaForm,
+                        local_id: selected.id,
+                        local_nome: selected.nome,
+                        local_endereco: selected.endereco || '',
+                        local_maps_url: selected.maps_url || '',
+                      });
+                    } else {
+                      setPartidaForm({
+                        ...partidaForm,
+                        local_id: '',
+                      });
+                    }
+                  }}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 mb-2"
+                >
+                  <option value="">Selecione um local pré-cadastrado...</option>
+                  {locais
+                    .filter((l) => l.ativo)
+                    .map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.nome} ({l.tipo_piso || 'Grama Sintética'})
+                      </option>
+                    ))}
+                </select>
+
+                <div className="space-y-2 bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-800/80">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-zinc-500 mb-0.5">Nome da Arena / Campo</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Arena Soccer Ville - Campo 1"
+                      value={partidaForm.local_nome}
+                      onChange={(e) => setPartidaForm({ ...partidaForm, local_nome: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-500 mb-0.5">Endereço Completo</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Av. do Futebol, 1000"
+                        value={partidaForm.local_endereco}
+                        onChange={(e) => setPartidaForm({ ...partidaForm, local_endereco: e.target.value })}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-500 mb-0.5">Link Google Maps / Waze</label>
+                      <input
+                        type="url"
+                        placeholder="https://maps.google.com/..."
+                        value={partidaForm.local_maps_url}
+                        onChange={(e) => setPartidaForm({ ...partidaForm, local_maps_url: e.target.value })}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1468,6 +1755,110 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
                 >
                   Salvar Bem
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Local / Campo */}
+      {modalLocalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-400" />
+                <span>{editingLocal ? 'Editar Local / Campo' : 'Novo Local ou Arena de Jogo'}</span>
+              </h3>
+              <button
+                onClick={() => setModalLocalOpen(false)}
+                className="text-zinc-500 hover:text-zinc-300 p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLocal} className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                  Nome do Local / Campo <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Arena Playball Pompeia - Campo Society 1"
+                  value={localForm.nome}
+                  onChange={(e) => setLocalForm({ ...localForm, nome: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Endereço Completo</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Rua Nicholas Boer, 120 - Pompeia, São Paulo/SP"
+                  value={localForm.endereco}
+                  onChange={(e) => setLocalForm({ ...localForm, endereco: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Tipo de Piso</label>
+                  <select
+                    value={localForm.tipo_piso}
+                    onChange={(e) => setLocalForm({ ...localForm, tipo_piso: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="Grama Sintética">Grama Sintética</option>
+                    <option value="Society">Society</option>
+                    <option value="Campo Natural">Campo Natural (Grama)</option>
+                    <option value="Quadra / Salão">Quadra / Futsal</option>
+                    <option value="Areia / Beach">Areia / Beach</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Link Maps / Waze</label>
+                  <input
+                    type="url"
+                    placeholder="https://maps.google.com/..."
+                    value={localForm.maps_url}
+                    onChange={(e) => setLocalForm({ ...localForm, maps_url: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                  Observações / Dicas de Acesso
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Ex: Estacionamento no local, vestiário 3 reservado para Os Canabis."
+                  value={localForm.observacoes}
+                  onChange={(e) => setLocalForm({ ...localForm, observacoes: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalLocalOpen(false)}
+                  className="px-3 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-zinc-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
+                >
+                  {editingLocal ? 'Salvar Alterações' : 'Cadastrar Local'}
                 </button>
               </div>
             </form>

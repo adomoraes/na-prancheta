@@ -62,6 +62,8 @@ import {
   AdminPartidaDTO,
   AdminCaixaResponseDTO,
   AdminPatrimonioDTO,
+  Local,
+  AdminLocalDTO,
 } from '../types';
 
 export const api = {
@@ -341,6 +343,12 @@ export const api = {
     };
   },
 
+  // 9. LOCAIS & CAMPOS (Leitura pública / consulta de agendamento)
+  async getLocais(timeId?: string): Promise<Local[]> {
+    const query = timeId ? `?time_id=${timeId}` : '';
+    return request<Local[]>(`/locais${query}`);
+  },
+
   // 10. PAINEL ADMINISTRATIVO ROOT (CRUDs Master)
   admin: {
     // 10.1 Usuários & Roles
@@ -503,6 +511,37 @@ export const api = {
     async deletePatrimonio(id: string) {
       return request<{ message: string }>(`/admin/patrimonio/${id}`, {
         method: 'DELETE',
+      });
+    },
+
+    // 10.6 Locais & Campos
+    async getLocais(): Promise<AdminLocalDTO[]> {
+      return request<AdminLocalDTO[]>('/admin/locais');
+    },
+
+    async createLocal(payload: {
+      nome: string;
+      endereco?: string;
+      maps_url?: string;
+      tipo_piso?: string;
+      observacoes?: string;
+    }) {
+      return request<{ message: string; local: AdminLocalDTO }>('/admin/locais', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateLocal(id: string, payload: Partial<AdminLocalDTO>) {
+      return request<{ message: string; local: AdminLocalDTO }>(`/admin/locais/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async toggleLocalStatus(id: string) {
+      return request<{ message: string; local: AdminLocalDTO }>(`/admin/locais/${id}/status`, {
+        method: 'PATCH',
       });
     },
   },

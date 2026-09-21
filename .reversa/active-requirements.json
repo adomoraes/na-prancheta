@@ -1,15 +1,16 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/005-numero-calcado-atleta",
-  "feature-id": "005",
-  "short-name": "numero-calcado-atleta",
-  "started-at": "2026-09-21T07:16:00Z",
+  "feature-dir": "_reversa_forward/006-crud-locais-campos",
+  "feature-id": "006",
+  "short-name": "crud-locais-campos",
+  "started-at": "2026-09-21T07:37:00Z",
   "current-stage": "sync",
   "stages-completed": [
     "requirements",
     "plan",
     "to-do",
     "coding",
+    "test",
     "sync"
   ],
   "paused-features": []

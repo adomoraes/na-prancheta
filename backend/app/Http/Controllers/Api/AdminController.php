@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Atleta;
 use App\Models\CaixaMovimentacao;
 use App\Models\ItemAlmoxarifado;
+use App\Models\Local;
 use App\Models\Partida;
 use App\Models\Time;
 use App\Models\User;
@@ -239,7 +240,8 @@ class AdminController extends Controller
 
     public function indexPartidas(Request $request): JsonResponse
     {
-        $partidas = Partida::orderByDesc('data_partida')
+        $partidas = Partida::with('local')
+            ->orderByDesc('data_partida')
             ->get();
 
         return response()->json($partidas);
@@ -251,6 +253,7 @@ class AdminController extends Controller
             'adversario' => 'required|string|max:255',
             'data_partida' => 'required|date',
             'horario_inicio' => 'required|string',
+            'local_id' => 'nullable|uuid|exists:locais,id',
             'local_nome' => 'required|string|max:255',
             'local_endereco' => 'nullable|string|max:255',
             'local_maps_url' => 'nullable|string|url',
@@ -275,6 +278,7 @@ class AdminController extends Controller
             'horario_inicio' => $validated['horario_inicio'],
             'horario_chegada_t70' => $horarioT70,
             'horario_prelecao_t35' => $horarioT35,
+            'local_id' => $validated['local_id'] ?? null,
             'local_nome' => $validated['local_nome'],
             'local_endereco' => $validated['local_endereco'] ?? 'Local a definir',
             'local_maps_url' => $validated['local_maps_url'] ?? null,
@@ -300,6 +304,7 @@ class AdminController extends Controller
             'adversario' => 'sometimes|required|string|max:255',
             'data_partida' => 'sometimes|required|date',
             'horario_inicio' => 'sometimes|required|string',
+            'local_id' => 'nullable|uuid|exists:locais,id',
             'local_nome' => 'sometimes|required|string|max:255',
             'local_endereco' => 'nullable|string|max:255',
             'local_maps_url' => 'nullable|string|url',
@@ -459,6 +464,96 @@ class AdminController extends Controller
 
         return response()->json([
             'message' => 'Item de patrimônio removido com sucesso.'
+        ]);
+    }
+
+    // ==========================================
+    // 6. GESTÃO DE LOCAIS & CAMPOS
+    // ==========================================
+
+    public function indexLocais(Request $request): JsonResponse
+    {
+        $locais = Local::withCount('partidas')
+            ->orderBy('nome')
+            ->get();
+
+        return response()->json($locais);
+    }
+
+    public function storeLocal(Request $request): JsonResponse
+    {
+        $time = Time::first();
+
+        $validated = $request->validate([
+            'nome' => [
+                'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('locais', 'nome')->where('time_id', $time?->id),
+            ],
+            'endereco' => 'nullable|string|max:255',
+            'maps_url' => 'nullable|string|url',
+            'tipo_piso' => 'nullable|string|max:50',
+            'observacoes' => 'nullable|string',
+            'ativo' => 'nullable|boolean',
+        ]);
+
+        $local = Local::create([
+            'id' => (string) Str::uuid(),
+            'time_id' => $time?->id,
+            'nome' => $validated['nome'],
+            'endereco' => $validated['endereco'] ?? null,
+            'maps_url' => $validated['maps_url'] ?? null,
+            'tipo_piso' => $validated['tipo_piso'] ?? 'Grama Sintética',
+            'observacoes' => $validated['observacoes'] ?? null,
+            'ativo' => $validated['ativo'] ?? true,
+        ]);
+
+        return response()->json([
+            'message' => 'Local cadastrado com sucesso.',
+            'local' => $local
+        ], 201);
+    }
+
+    public function updateLocal(Request $request, string $id): JsonResponse
+    {
+        $local = Local::findOrFail($id);
+        $time = Time::first();
+
+        $validated = $request->validate([
+            'nome' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('locais', 'nome')
+                    ->where('time_id', $time?->id)
+                    ->ignore($local->id),
+            ],
+            'endereco' => 'nullable|string|max:255',
+            'maps_url' => 'nullable|string|url',
+            'tipo_piso' => 'nullable|string|max:50',
+            'observacoes' => 'nullable|string',
+            'ativo' => 'sometimes|boolean',
+        ]);
+
+        $local->update($validated);
+
+        return response()->json([
+            'message' => 'Local atualizado com sucesso.',
+            'local' => $local
+        ]);
+    }
+
+    public function toggleLocalStatus(string $id): JsonResponse
+    {
+        $local = Local::findOrFail($id);
+        $novoStatus = !$local->ativo;
+        $local->update(['ativo' => $novoStatus]);
+
+        return response()->json([
+            'message' => $novoStatus ? 'Local reativado com sucesso.' : 'Local desativado com sucesso.',
+            'local' => $local
         ]);
     }
 }

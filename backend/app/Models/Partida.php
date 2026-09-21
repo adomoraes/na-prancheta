@@ -26,6 +26,7 @@ class Partida extends Model
         'horario_inicio',
         'horario_chegada_t70',
         'horario_prelecao_t35',
+        'local_id',
         'local_nome',
         'local_endereco',
         'local_maps_url',
@@ -80,6 +81,11 @@ class Partida extends Model
     public function time(): BelongsTo
     {
         return $this->belongsTo(Time::class, 'time_id');
+    }
+
+    public function local(): BelongsTo
+    {
+        return $this->belongsTo(Local::class, 'local_id');
     }
 
     public function confirmacoes(): HasMany
