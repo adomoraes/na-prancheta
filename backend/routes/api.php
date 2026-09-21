@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AlmoxarifadoController;
 use App\Http\Controllers\Api\AtletaController;
 use App\Http\Controllers\Api\AuthController;
@@ -55,4 +56,36 @@ Route::prefix('partidas/{id}')->group(function () {
         // SCOUTS & ELEIÇÃO DE MVP (Exclusivo Técnico & Geral)
         Route::post('/scouts/{atletaId}', [ScoutController::class, 'salvarScout'])->middleware('role:tecnico,geral');
     });
+});
+
+// 4. PAINEL ADMINISTRATIVO BACKOFFICE (Exclusivo ROOT)
+Route::prefix('admin')->middleware(['auth:sanctum', 'role:root'])->group(function () {
+    // 4.1 Usuários & Roles
+    Route::get('/users', [AdminController::class, 'indexUsers']);
+    Route::post('/users', [AdminController::class, 'storeUser']);
+    Route::put('/users/{id}', [AdminController::class, 'updateUser']);
+    Route::patch('/users/{id}/password', [AdminController::class, 'resetUserPassword']);
+    Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+
+    // 4.2 Atletas & Elenco
+    Route::get('/atletas', [AdminController::class, 'indexAtletas']);
+    Route::post('/atletas', [AdminController::class, 'storeAtleta']);
+    Route::put('/atletas/{id}', [AdminController::class, 'updateAtleta']);
+    Route::patch('/atletas/{id}/status', [AdminController::class, 'toggleAtletaStatus']);
+
+    // 4.3 Partidas & Vestiário
+    Route::get('/partidas', [AdminController::class, 'indexPartidas']);
+    Route::post('/partidas', [AdminController::class, 'storePartida']);
+    Route::put('/partidas/{id}', [AdminController::class, 'updatePartida']);
+    Route::patch('/partidas/{id}/status', [AdminController::class, 'updatePartidaStatus']);
+
+    // 4.4 Caixa Geral & Financeiro
+    Route::get('/caixa', [AdminController::class, 'indexCaixa']);
+    Route::post('/caixa', [AdminController::class, 'storeCaixa']);
+
+    // 4.5 Patrimônio Esportivo & Almoxarifado
+    Route::get('/patrimonio', [AdminController::class, 'indexPatrimonio']);
+    Route::post('/patrimonio', [AdminController::class, 'storePatrimonio']);
+    Route::put('/patrimonio/{id}', [AdminController::class, 'updatePatrimonio']);
+    Route::delete('/patrimonio/{id}', [AdminController::class, 'deletePatrimonio']);
 });

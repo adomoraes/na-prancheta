@@ -62,8 +62,16 @@ class User extends Authenticatable
     {
         $currentRole = $this->role;
 
-        // Perfil 'geral' tem acesso de superusuário administrativo
+        // Perfil 'root' é o superusuário mestre
+        if ($currentRole === 'root') {
+            return true;
+        }
+
+        // Perfil 'geral' tem acesso de diretoria nas operações normais, mas NÃO acessa recursos exclusivos de 'root'
         if ($currentRole === 'geral') {
+            if ($roles === 'root' || (is_array($roles) && count($roles) === 1 && $roles[0] === 'root')) {
+                return false;
+            }
             return true;
         }
 
@@ -72,6 +80,11 @@ class User extends Authenticatable
         }
 
         return $currentRole === $roles;
+    }
+
+    public function isRoot(): bool
+    {
+        return $this->role === 'root';
     }
 
     public function isAtleta(): bool

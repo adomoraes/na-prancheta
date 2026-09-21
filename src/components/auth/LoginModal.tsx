@@ -96,6 +96,16 @@ const DEV_PROFILES: {
     border: 'border-emerald-500/30 hover:border-emerald-500/70',
     icon: Shield,
   },
+  {
+    role: 'root',
+    nome: 'Administrador Root',
+    apelido: 'Super ROOT',
+    funcao: 'Backoffice & Master CRUDs',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=128&q=80',
+    color: 'text-rose-400 bg-rose-500/10',
+    border: 'border-rose-500/30 hover:border-rose-500/70',
+    icon: Shield,
+  },
 ];
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
