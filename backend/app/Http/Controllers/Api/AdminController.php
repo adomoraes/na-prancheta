@@ -9,6 +9,7 @@ use App\Models\CaixaMovimentacao;
 use App\Models\ItemAlmoxarifado;
 use App\Models\Local;
 use App\Models\Partida;
+use App\Models\ScoutPartida;
 use App\Models\Time;
 use App\Models\User;
 use Carbon\Carbon;
@@ -682,6 +683,149 @@ class AdminController extends Controller
         return response()->json([
             'message' => $novoStatus ? 'Adversário reativado com sucesso.' : 'Adversário desativado com sucesso.',
             'adversario' => $adversario
+        ]);
+    }
+
+    // ==========================================
+    // 8. GESTÃO DE SCOUTS & ESTATÍSTICAS
+    // ==========================================
+
+    public function indexScouts(Request $request): JsonResponse
+    {
+        $query = ScoutPartida::with(['atleta', 'partida']);
+
+        if ($request->filled('partida_id')) {
+            $query->where('partida_id', $request->partida_id);
+        }
+
+        if ($request->filled('atleta_id')) {
+            $query->where('atleta_id', $request->atleta_id);
+        }
+
+        $scouts = $query->orderBy('updated_at', 'desc')->get();
+
+        return response()->json($scouts);
+    }
+
+    public function leaderboardScouts(): JsonResponse
+    {
+        $scouts = ScoutPartida::with(['atleta', 'partida'])->get();
+
+        $leaderboard = $scouts->groupBy('atleta_id')->map(function ($partidasAtleta, $atletaId) {
+            $atleta = $partidasAtleta->first()->atleta;
+            return [
+                'atleta_id' => $atletaId,
+                'atleta_nome' => $atleta?->nome ?? 'Atleta',
+                'atleta_apelido' => $atleta?->apelido ?? '',
+                'numero_camisa' => $atleta?->numero_camisa,
+                'posicao' => $atleta?->posicao_principal ?? 'Geral',
+                'jogos' => $partidasAtleta->unique('partida_id')->count(),
+                'gols' => (int) $partidasAtleta->sum('gols'),
+                'assistencias' => (int) $partidasAtleta->sum('assistencias'),
+                'participacoes_gols' => (int) ($partidasAtleta->sum('gols') + $partidasAtleta->sum('assistencias')),
+                'cartoes_amarelos' => (int) $partidasAtleta->sum('cartoes_amarelos'),
+                'cartoes_vermelhos' => (int) $partidasAtleta->sum('cartoes_vermelhos'),
+                'mvps' => (int) $partidasAtleta->where('foi_mvp', true)->count(),
+                'minutos' => (int) $partidasAtleta->sum('minutos_jogados'),
+                'gols_sofridos' => (int) $partidasAtleta->sum('gols_sofridos_goleiro'),
+            ];
+        })->sortByDesc('gols')->values();
+
+        return response()->json($leaderboard);
+    }
+
+    public function storeScout(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'partida_id' => 'required|uuid|exists:partidas,id',
+            'atleta_id' => 'required|uuid|exists:atletas,id',
+            'gols' => 'nullable|integer|min:0',
+            'assistencias' => 'nullable|integer|min:0',
+            'cartoes_amarelos' => 'nullable|integer|min:0',
+            'cartoes_vermelhos' => 'nullable|integer|min:0',
+            'gols_sofridos_goleiro' => 'nullable|integer|min:0',
+            'minutos_jogados' => 'nullable|integer|min:0',
+            'foi_mvp' => 'nullable|boolean',
+        ], [
+            'min' => 'Valores estatísticos de súmula não podem ser negativos.',
+        ]);
+
+        $foiMvp = (bool) $request->input('foi_mvp', false);
+
+        return DB::transaction(function () use ($request, $validated, $foiMvp) {
+            // Exclusividade estrita de MVP na mesma partida (PT-006)
+            if ($foiMvp) {
+                ScoutPartida::where('partida_id', $validated['partida_id'])
+                    ->where('atleta_id', '!=', $validated['atleta_id'])
+                    ->update(['foi_mvp' => false]);
+            }
+
+            $scout = ScoutPartida::firstOrNew([
+                'partida_id' => $validated['partida_id'],
+                'atleta_id' => $validated['atleta_id'],
+            ]);
+
+            if (!$scout->exists) {
+                $scout->id = (string) Str::uuid();
+            }
+
+            $scout->gols = (int) ($validated['gols'] ?? 0);
+            $scout->assistencias = (int) ($validated['assistencias'] ?? 0);
+            $scout->cartoes_amarelos = (int) ($validated['cartoes_amarelos'] ?? 0);
+            $scout->cartoes_vermelhos = (int) ($validated['cartoes_vermelhos'] ?? 0);
+            $scout->gols_sofridos_goleiro = (int) ($validated['gols_sofridos_goleiro'] ?? 0);
+            $scout->minutos_jogados = (int) ($validated['minutos_jogados'] ?? 0);
+            $scout->foi_mvp = $foiMvp;
+
+            $scout->save();
+
+            return response()->json([
+                'message' => 'Scout registrado com sucesso.',
+                'scout' => $scout->load(['atleta', 'partida'])
+            ], 201);
+        });
+    }
+
+    public function updateScout(Request $request, string $id): JsonResponse
+    {
+        $scout = ScoutPartida::findOrFail($id);
+
+        $validated = $request->validate([
+            'gols' => 'sometimes|integer|min:0',
+            'assistencias' => 'sometimes|integer|min:0',
+            'cartoes_amarelos' => 'sometimes|integer|min:0',
+            'cartoes_vermelhos' => 'sometimes|integer|min:0',
+            'gols_sofridos_goleiro' => 'sometimes|integer|min:0',
+            'minutos_jogados' => 'sometimes|integer|min:0',
+            'foi_mvp' => 'sometimes|boolean',
+        ], [
+            'min' => 'Valores estatísticos de súmula não podem ser negativos.',
+        ]);
+
+        return DB::transaction(function () use ($request, $scout, $validated) {
+            if ($request->has('foi_mvp') && $request->foi_mvp) {
+                ScoutPartida::where('partida_id', $scout->partida_id)
+                    ->where('id', '!=', $scout->id)
+                    ->update(['foi_mvp' => false]);
+            }
+
+            $scout->fill($validated);
+            $scout->save();
+
+            return response()->json([
+                'message' => 'Scout atualizado com sucesso.',
+                'scout' => $scout->load(['atleta', 'partida'])
+            ]);
+        });
+    }
+
+    public function deleteScout(string $id): JsonResponse
+    {
+        $scout = ScoutPartida::findOrFail($id);
+        $scout->delete();
+
+        return response()->json([
+            'message' => 'Scout removido com sucesso.'
         ]);
     }
 }

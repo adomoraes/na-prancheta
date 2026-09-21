@@ -203,7 +203,16 @@ cd backend
 php artisan config:clear --ansi && php artisan test
 ```
 
-### Cobertura da Suíte (57 Testes Passando, 264 Asserções):
+### Cobertura da Suíte (65 Testes Passando, 312 Asserções):
+- **`AdminScoutTest` (8 testes):**
+  - Rejeição 401 para requisições anônimas em `/api/admin/scouts` e rotas filhas.
+  - Rejeição 403 para usuários sem perfil `root` (incluindo técnico/atleta em rotas admin).
+  - Listagem de scouts pelo ROOT com suporte a filtros por `partida_id` e `atleta_id`.
+  - Obtenção do Leaderboard e estatísticas consolidadas por atleta (jogos, gols, assistências, participações, cartões, mvps e minutos).
+  - Criação de scout de partida pelo ROOT com validação de limites e persistência integral.
+  - Garantia canônica de exclusividade estrita de 1 MVP por partida (PT-006): ao eleger novo craque, o anterior tem o status revogado atomicamente.
+  - Rejeição 422 de valores estatísticos negativos.
+  - Atualização via PUT e exclusão via DELETE de scout com integridade de banco de dados.
 - **`PatrimonioUniformeTest` (6 testes):**
   - Criação de item comum de patrimônio sem obrigatoriedade de campos de uniforme.
   - Validação condicional que exige `tipo_uniforme` válido (`camisa`, `meiao`, `calcao`) quando a categoria for `uniforme` ou `uniformes`.
