@@ -22,33 +22,37 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// 2. ELENCO & ATLETAS
+// 2. ELENCO & ATLETAS (Leitura pública, cadastro autenticado)
 Route::get('/atletas', [AtletaController::class, 'index']);
-Route::post('/atletas', [AtletaController::class, 'store']);
+Route::post('/atletas', [AtletaController::class, 'store'])->middleware('auth:sanctum');
 
 // 3. PARTIDAS & VESTIÁRIO
 Route::prefix('partidas/{id}')->group(function () {
+    // 3.1 Consultas públicas (permitidas para visitantes compartilharem links do WhatsApp)
     Route::get('/', [PartidaController::class, 'show']);
     Route::get('/protocolo-vestiario', [PartidaController::class, 'protocoloVestiario']);
-
-    // 4. CONFIRMAÇÃO DE PRESENÇA & PONTUALIDADE
-    Route::post('/presencas', [PresencaController::class, 'updatePresenca']);
-    Route::post('/presencas/{atletaId}/chegada', [PresencaController::class, 'registrarChegada']);
-
-    // 5. PRANCHETA TÁTICA & ESCALAÇÃO (Exclusivo Técnico & Geral)
     Route::get('/escalacao', [EscalacaoController::class, 'getEscalacao']);
-    Route::post('/escalacao', [EscalacaoController::class, 'salvarEscalacao'])->middleware('role:tecnico,geral');
-
-    // 6. VAQUINHA, PIX & CAIXA GERAL (Exclusivo Tesoureiro/Financeiro & Geral)
     Route::get('/vaquinha', [VaquinhaController::class, 'getVaquinha']);
-    Route::post('/vaquinha/{atletaId}/baixa', [VaquinhaController::class, 'registrarBaixa'])->middleware('role:financeiro,geral');
-    Route::post('/vaquinha/encerrar', [VaquinhaController::class, 'encerrarVaquinha'])->middleware('role:financeiro,geral');
-
-    // 7. ALMOXARIFADO & TRAVA DA RESENHA (Exclusivo Almoxarifado & Geral)
     Route::get('/almoxarifado', [AlmoxarifadoController::class, 'getStatus']);
-    Route::post('/almoxarifado/fechar-malas', [AlmoxarifadoController::class, 'fecharMalas'])->middleware('role:almoxarifado,geral');
-
-    // 8. SCOUTS & ELEIÇÃO DE MVP (Exclusivo Técnico & Geral)
     Route::get('/scouts', [ScoutController::class, 'getScouts']);
-    Route::post('/scouts/{atletaId}', [ScoutController::class, 'salvarScout'])->middleware('role:tecnico,geral');
+
+    // 3.2 Mutações protegidas (exigem autenticação Sanctum)
+    Route::middleware('auth:sanctum')->group(function () {
+        // CONFIRMAÇÃO DE PRESENÇA & PONTUALIDADE
+        Route::post('/presencas', [PresencaController::class, 'updatePresenca']);
+        Route::post('/presencas/{atletaId}/chegada', [PresencaController::class, 'registrarChegada']);
+
+        // PRANCHETA TÁTICA & ESCALAÇÃO (Exclusivo Técnico & Geral)
+        Route::post('/escalacao', [EscalacaoController::class, 'salvarEscalacao'])->middleware('role:tecnico,geral');
+
+        // VAQUINHA, PIX & CAIXA GERAL (Exclusivo Tesoureiro/Financeiro & Geral)
+        Route::post('/vaquinha/{atletaId}/baixa', [VaquinhaController::class, 'registrarBaixa'])->middleware('role:financeiro,geral');
+        Route::post('/vaquinha/encerrar', [VaquinhaController::class, 'encerrarVaquinha'])->middleware('role:financeiro,geral');
+
+        // ALMOXARIFADO & TRAVA DA RESENHA (Exclusivo Almoxarifado & Geral)
+        Route::post('/almoxarifado/fechar-malas', [AlmoxarifadoController::class, 'fecharMalas'])->middleware('role:almoxarifado,geral');
+
+        // SCOUTS & ELEIÇÃO DE MVP (Exclusivo Técnico & Geral)
+        Route::post('/scouts/{atletaId}', [ScoutController::class, 'salvarScout'])->middleware('role:tecnico,geral');
+    });
 });

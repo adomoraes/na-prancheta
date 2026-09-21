@@ -1,16 +1,17 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/001-implementar-pwa",
-  "feature-id": "001",
-  "short-name": "implementar-pwa",
-  "started-at": "2026-09-20T16:48:00Z",
-  "current-stage": "done",
+  "feature-dir": "_reversa_forward/003-bloqueio-rotas-auth",
+  "feature-id": "003",
+  "short-name": "bloqueio-rotas-auth",
+  "started-at": "2026-09-21T01:55:00Z",
+  "current-stage": "completed",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
     "to-do",
-    "coding"
+    "coding",
+    "sync"
   ],
   "paused-features": []
 }

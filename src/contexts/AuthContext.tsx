@@ -134,6 +134,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Listener de expiração de sessão (capturado via erro HTTP 401 do interceptador)
+  const [sessionToast, setSessionToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleSessionExpired = (e: Event) => {
+      const customEvent = e as CustomEvent<{ message?: string }>;
+      const msg = customEvent.detail?.message || 'Sessão expirada. Faça login novamente.';
+      setUser(null);
+      setToken(null);
+      setActiveRole('atleta');
+      localStorage.removeItem(USER_STORAGE_KEY);
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      setSessionToast(msg);
+      setIsLoginModalOpen(true);
+
+      setTimeout(() => {
+        setSessionToast(null);
+      }, 6000);
+    };
+
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('auth:session-expired', handleSessionExpired);
+    };
+  }, []);
+
   const hasRole = (roles: NivelAcesso | NivelAcesso[]): boolean => {
     if (!user) return false;
     if (activeRole === 'geral') return true;
@@ -145,13 +171,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const canAccessTab = (tab: 'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'): boolean => {
-    // Ficha de Jogo e Scout são acessíveis a todos os atletas e membros
-    if (tab === 'jogo' || tab === 'scout') {
+    // Ficha de Jogo (cronômetro T-50, GPS e adversário) é pública para visitantes
+    if (tab === 'jogo') {
       return true;
     }
 
-    // Usuário administrador geral tem acesso universal
+    // Todas as demais abas operacionais exigem autenticação obrigatória
+    if (!user) {
+      return false;
+    }
+
+    // Administrador geral tem acesso universal a todas as abas
     if (activeRole === 'geral') {
+      return true;
+    }
+
+    // Atletas e comissão técnica autenticados podem ver scouts
+    if (tab === 'scout') {
       return true;
     }
 
@@ -190,6 +226,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         canAccessTab,
       }}
     >
+      {sessionToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-red-950/90 border border-red-500/30 rounded-xl shadow-2xl backdrop-blur-md text-red-200 text-sm">
+          <svg className="w-5 h-5 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span className="font-medium">{sessionToast}</span>
+          <button
+            onClick={() => setSessionToast(null)}
+            className="p-1 hover:bg-white/10 rounded-lg transition-colors text-red-400"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       {children}
     </AuthContext.Provider>
   );

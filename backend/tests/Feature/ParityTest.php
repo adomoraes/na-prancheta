@@ -15,6 +15,7 @@ use App\Models\VaquinhaLancamento;
 use Database\Seeders\LegacyInitialDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ParityTest extends TestCase
@@ -25,6 +26,10 @@ class ParityTest extends TestCase
     {
         parent::setUp();
         $this->seed(LegacyInitialDataSeeder::class);
+        $admin = User::whereIn('role', ['admin', 'geral'])->first();
+        if ($admin) {
+            Sanctum::actingAs($admin);
+        }
     }
 
     /**

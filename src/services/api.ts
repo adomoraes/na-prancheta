@@ -31,6 +31,22 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const data = await response.json();
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem('naprancheta_user');
+      if (
+        typeof window !== 'undefined' &&
+        !endpoint.startsWith('/auth/login') &&
+        !endpoint.startsWith('/auth/google') &&
+        !endpoint.startsWith('/auth/dev-login')
+      ) {
+        window.dispatchEvent(
+          new CustomEvent('auth:session-expired', {
+            detail: { message: data.message || 'Sessão expirada. Faça login novamente.' },
+          })
+        );
+      }
+    }
     const errorMsg = data.message || `Erro ${response.status}: falha na comunicação com a API`;
     throw new Error(errorMsg);
   }
