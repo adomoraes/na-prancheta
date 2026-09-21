@@ -66,6 +66,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     nome: '',
     apelido: '',
     numero_camisa: '',
+    numero_calcado: '',
     posicao_principal: 'MEI',
     posicao_secundaria: '',
     tipo_vinculo: 'mensalista',
@@ -202,6 +203,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
           nome: atletaForm.nome,
           apelido: atletaForm.apelido || undefined,
           numero_camisa: atletaForm.numero_camisa ? parseInt(atletaForm.numero_camisa, 10) : undefined,
+          numero_calcado: atletaForm.numero_calcado ? parseInt(atletaForm.numero_calcado, 10) : undefined,
           posicao_principal: atletaForm.posicao_principal,
           posicao_secundaria: atletaForm.posicao_secundaria || undefined,
           tipo_vinculo: atletaForm.tipo_vinculo,
@@ -212,6 +214,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
           nome: atletaForm.nome,
           apelido: atletaForm.apelido || undefined,
           numero_camisa: atletaForm.numero_camisa ? parseInt(atletaForm.numero_camisa, 10) : undefined,
+          numero_calcado: atletaForm.numero_calcado ? parseInt(atletaForm.numero_calcado, 10) : undefined,
           posicao_principal: atletaForm.posicao_principal,
           posicao_secundaria: atletaForm.posicao_secundaria || undefined,
           tipo_vinculo: atletaForm.tipo_vinculo,
@@ -600,6 +603,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                     nome: '',
                     apelido: '',
                     numero_camisa: '',
+                    numero_calcado: '',
                     posicao_principal: 'MEI',
                     posicao_secundaria: '',
                     tipo_vinculo: 'mensalista',
@@ -621,6 +625,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                       <th className="py-3 px-4">Camisa</th>
                       <th className="py-3 px-4">Atleta</th>
                       <th className="py-3 px-4">Posição</th>
+                      <th className="py-3 px-4">Calçado</th>
                       <th className="py-3 px-4">Vínculo</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4 text-right">Ações</th>
@@ -654,6 +659,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                               <span className="text-[10px] text-zinc-500 ml-1">({a.posicao_secundaria})</span>
                             )}
                           </td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-1 rounded-lg bg-zinc-800/80 border border-zinc-700/60 font-semibold text-xs text-zinc-300">
+                              {a.numero_calcado ? a.numero_calcado : '—'}
+                            </span>
+                          </td>
                           <td className="py-3 px-4 capitalize text-zinc-400">{a.tipo_vinculo || 'mensalista'}</td>
                           <td className="py-3 px-4">
                             <span
@@ -675,6 +685,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                                     nome: a.nome,
                                     apelido: a.apelido || '',
                                     numero_camisa: a.numero_camisa?.toString() || '',
+                                    numero_calcado: a.numero_calcado?.toString() || '',
                                     posicao_principal: a.posicao_principal,
                                     posicao_secundaria: a.posicao_secundaria || '',
                                     tipo_vinculo: a.tipo_vinculo || 'mensalista',
@@ -1117,7 +1128,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Apelido de Jogo</label>
                   <input
@@ -1128,13 +1139,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Número da Camisa</label>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Nº Camisa</label>
                   <input
                     type="number"
                     min={0}
                     max={99}
                     value={atletaForm.numero_camisa}
                     onChange={(e) => setAtletaForm({ ...atletaForm, numero_camisa: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Nº Calçado</label>
+                  <input
+                    type="number"
+                    min={25}
+                    max={50}
+                    placeholder="Ex: 41"
+                    value={atletaForm.numero_calcado}
+                    onChange={(e) => setAtletaForm({ ...atletaForm, numero_calcado: e.target.value })}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
                   />
                 </div>

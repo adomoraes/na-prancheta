@@ -40,6 +40,7 @@ class AtletaController extends Controller
             'posicao_principal' => 'required|string|max:10',
             'posicao_secundaria' => 'nullable|string|max:10',
             'tipo_vinculo' => 'nullable|string|in:mensalista,convidado',
+            'numero_calcado' => 'nullable|integer|min:25|max:50',
             'time_id' => 'nullable|uuid|exists:times,id',
         ], [
             'numero_camisa.unique' => 'O número de camisa informado já está em uso por outro atleta ativo deste time.',

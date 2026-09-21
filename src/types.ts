@@ -18,6 +18,7 @@ export interface Atleta {
   nivel_acesso: NivelAcesso;
   tamanho_camisa: string;
   tamanho_calcao: string;
+  numero_calcado?: number | null;
   ativo: boolean;
   criado_em: string;
   chegou_vestiario?: boolean;
@@ -136,6 +137,7 @@ export interface AdminAtletaDTO {
   nome: string;
   apelido?: string | null;
   numero_camisa?: number | null;
+  numero_calcado?: number | null;
   posicao_principal: string;
   posicao_secundaria?: string | null;
   tipo_vinculo?: string;
