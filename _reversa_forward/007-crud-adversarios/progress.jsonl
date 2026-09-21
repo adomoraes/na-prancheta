@@ -1,0 +1,13 @@
+{"step":1,"task":"T001","status":"done","timestamp":"2026-09-21T05:00:00Z","description":"Criada migration para tabela adversarios e foreign key adversario_id em partidas"}
+{"step":2,"task":"T002","status":"done","timestamp":"2026-09-21T05:01:00Z","description":"Tipagens TypeScript criadas em src/types.ts para Adversario e AdminAdversarioDTO"}
+{"step":3,"task":"T003","status":"done","timestamp":"2026-09-21T05:02:00Z","description":"Criada suíte de testes de integração AdversarioCrudTest.php com 6 cenários"}
+{"step":4,"task":"T004","status":"done","timestamp":"2026-09-21T05:02:30Z","description":"Criado Model Eloquent Adversario.php com HasUuids e relacionamentos"}
+{"step":5,"task":"T005","status":"done","timestamp":"2026-09-21T05:03:00Z","description":"Atualizado Model Partida.php com adversario_id e relacionamento adversarioRel"}
+{"step":6,"task":"T006","status":"done","timestamp":"2026-09-21T05:03:30Z","description":"Implementados endpoints administrativos em AdminController.php"}
+{"step":7,"task":"T007","status":"done","timestamp":"2026-09-21T05:03:45Z","description":"Criado AdversarioController.php para listagem pública de ativos"}
+{"step":8,"task":"T008","status":"done","timestamp":"2026-09-21T05:04:00Z","description":"Registradas rotas públicas e administrativas em routes/api.php"}
+{"step":9,"task":"T009","status":"done","timestamp":"2026-09-21T05:04:30Z","description":"Integrado serviço de API em src/services/api.ts"}
+{"step":10,"task":"T010","status":"done","timestamp":"2026-09-21T05:05:30Z","description":"Implementada aba Adversarios no AdminDashboard.tsx"}
+{"step":11,"task":"T011","status":"done","timestamp":"2026-09-21T05:06:00Z","description":"Integrado seletor de adversários com auto-preenchimento no modal de criação de partida"}
+{"step":12,"task":"T012","status":"done","timestamp":"2026-09-21T05:07:00Z","description":"Executadas migrations e validada suíte com 51 testes passando 100%"}
+{"step":13,"task":"T013","status":"done","timestamp":"2026-09-21T05:07:30Z","description":"Frontend compilado via npm run build com sucesso sem erros de tipagem"}

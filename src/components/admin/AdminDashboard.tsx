@@ -21,6 +21,8 @@ import {
   X,
   MapPin,
   ExternalLink,
+  Swords,
+  Phone,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import {
@@ -30,6 +32,7 @@ import {
   AdminCaixaResponseDTO,
   AdminPatrimonioDTO,
   AdminLocalDTO,
+  AdminAdversarioDTO,
   NivelAcesso,
 } from '../../types';
 
@@ -37,7 +40,7 @@ interface AdminDashboardProps {
   onBackToMatch: () => void;
 }
 
-type AdminTab = 'users' | 'atletas' | 'partidas' | 'caixa' | 'patrimonio' | 'locais';
+type AdminTab = 'users' | 'atletas' | 'partidas' | 'locais' | 'adversarios' | 'caixa' | 'patrimonio';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
@@ -51,6 +54,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
   const [caixaData, setCaixaData] = useState<AdminCaixaResponseDTO | null>(null);
   const [patrimonio, setPatrimonio] = useState<AdminPatrimonioDTO[]>([]);
   const [locais, setLocais] = useState<AdminLocalDTO[]>([]);
+  const [adversarios, setAdversarios] = useState<AdminAdversarioDTO[]>([]);
 
   // Filtros
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -79,6 +83,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
   const [modalPartidaOpen, setModalPartidaOpen] = useState(false);
   const [partidaForm, setPartidaForm] = useState({
     adversario: '',
+    adversario_id: '',
     data_partida: new Date().toISOString().split('T')[0],
     horario_inicio: '19:30',
     local_id: '',
@@ -116,6 +121,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     observacoes: '',
   });
 
+  const [modalAdversarioOpen, setModalAdversarioOpen] = useState(false);
+  const [editingAdversario, setEditingAdversario] = useState<AdminAdversarioDTO | null>(null);
+  const [adversarioForm, setAdversarioForm] = useState({
+    nome: '',
+    responsavel_nome: '',
+    responsavel_telefone: '',
+    cor_uniforme_principal: '',
+    escudo_url: '',
+    observacoes: '',
+  });
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setFeedback({ type, message });
     setTimeout(() => setFeedback(null), 4000);
@@ -132,12 +148,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         const data = await api.admin.getAtletas();
         setAtletas(data);
       } else if (tab === 'partidas') {
-        const [partidasData, locaisData] = await Promise.all([
+        const [partidasData, locaisData, adversariosData] = await Promise.all([
           api.admin.getPartidas(),
           api.admin.getLocais(),
+          api.admin.getAdversarios(),
         ]);
         setPartidas(partidasData);
         setLocais(locaisData);
+        setAdversarios(adversariosData);
       } else if (tab === 'caixa') {
         const data = await api.admin.getCaixa();
         setCaixaData(data);
@@ -147,6 +165,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
       } else if (tab === 'locais') {
         const data = await api.admin.getLocais();
         setLocais(data);
+      } else if (tab === 'adversarios') {
+        const data = await api.admin.getAdversarios();
+        setAdversarios(data);
       }
     } catch (err: any) {
       showToast(err.message || 'Falha ao carregar dados.', 'error');
@@ -271,6 +292,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     try {
       await api.admin.createPartida({
         adversario: partidaForm.adversario,
+        adversario_id: partidaForm.adversario_id || undefined,
         data_partida: partidaForm.data_partida,
         horario_inicio: partidaForm.horario_inicio,
         local_id: partidaForm.local_id || undefined,
@@ -409,6 +431,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
     }
   };
 
+  // ==========================
+  // HANDLERS: ADVERSÁRIOS & RIVAIS
+  // ==========================
+  const handleSaveAdversario = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingAdversario) {
+        await api.admin.updateAdversario(editingAdversario.id, {
+          nome: adversarioForm.nome,
+          responsavel_nome: adversarioForm.responsavel_nome || undefined,
+          responsavel_telefone: adversarioForm.responsavel_telefone || undefined,
+          cor_uniforme_principal: adversarioForm.cor_uniforme_principal || undefined,
+          escudo_url: adversarioForm.escudo_url || undefined,
+          observacoes: adversarioForm.observacoes || undefined,
+        });
+        showToast('Adversário atualizado com sucesso.');
+      } else {
+        await api.admin.createAdversario({
+          nome: adversarioForm.nome,
+          responsavel_nome: adversarioForm.responsavel_nome || undefined,
+          responsavel_telefone: adversarioForm.responsavel_telefone || undefined,
+          cor_uniforme_principal: adversarioForm.cor_uniforme_principal || undefined,
+          escudo_url: adversarioForm.escudo_url || undefined,
+          observacoes: adversarioForm.observacoes || undefined,
+        });
+        showToast('Adversário cadastrado com sucesso.');
+      }
+      setModalAdversarioOpen(false);
+      loadData('adversarios');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleToggleAdversarioStatus = async (adversario: AdminAdversarioDTO) => {
+    const acao = adversario.ativo ? 'desativar' : 'reativar';
+    if (!window.confirm(`Deseja ${acao} o adversário "${adversario.nome}"? O histórico de confrontos será preservado.`)) return;
+    try {
+      await api.admin.toggleAdversarioStatus(adversario.id);
+      showToast(`Adversário ${!adversario.ativo ? 'reativado' : 'desativado'} com sucesso.`);
+      loadData('adversarios');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-16">
       {/* Top Bar Administrativa */}
@@ -482,6 +550,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
             { id: 'atletas', label: 'Elenco & Atletas', icon: Users, count: atletas.length },
             { id: 'partidas', label: 'Partidas & Agenda', icon: Calendar, count: partidas.length },
             { id: 'locais', label: 'Locais & Campos', icon: MapPin, count: locais.length },
+            { id: 'adversarios', label: 'Adversários', icon: Swords, count: adversarios.length },
             { id: 'caixa', label: 'Caixa Geral', icon: DollarSign },
             { id: 'patrimonio', label: 'Patrimônio', icon: Package, count: patrimonio.length },
           ].map((tab) => {
@@ -1008,6 +1077,176 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         )}
 
         {/* ========================================================= */}
+        {/* ABA: ADVERSÁRIOS & RIVAIS */}
+        {/* ========================================================= */}
+        {activeTab === 'adversarios' && (
+          <div className="mt-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/60 p-3.5 rounded-2xl border border-zinc-800">
+              <div className="flex items-center gap-2.5 flex-1 max-w-md">
+                <div className="relative w-full">
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nome do adversário, responsável ou uniforme..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingAdversario(null);
+                  setAdversarioForm({
+                    nome: '',
+                    responsavel_nome: '',
+                    responsavel_telefone: '',
+                    cor_uniforme_principal: '',
+                    escudo_url: '',
+                    observacoes: '',
+                  });
+                  setModalAdversarioOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Adversário</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {adversarios
+                .filter(
+                  (adv) =>
+                    adv.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (adv.responsavel_nome && adv.responsavel_nome.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (adv.cor_uniforme_principal && adv.cor_uniforme_principal.toLowerCase().includes(searchQuery.toLowerCase()))
+                )
+                .map((adv) => (
+                  <div
+                    key={adv.id}
+                    className={`bg-zinc-900 border rounded-2xl p-4 flex flex-col justify-between shadow-sm transition ${
+                      adv.ativo ? 'border-zinc-800 hover:border-zinc-700' : 'border-red-900/30 opacity-70 bg-zinc-950'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        {adv.cor_uniforme_principal ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            Uniforme: {adv.cor_uniforme_principal}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
+                            Uniforme não inf.
+                          </span>
+                        )}
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            adv.ativo
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                              : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                          }`}
+                        >
+                          {adv.ativo ? 'ATIVO' : 'DESATIVADO'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {adv.escudo_url ? (
+                          <img
+                            src={adv.escudo_url}
+                            alt={`Escudo ${adv.nome}`}
+                            className="w-10 h-10 rounded-full object-cover border border-zinc-700 bg-zinc-800 shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 shrink-0">
+                            <Swords className="w-5 h-5 text-emerald-400" />
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-bold text-sm text-zinc-100 leading-tight">
+                            {adv.nome}
+                          </h3>
+                          {adv.responsavel_nome && (
+                            <p className="text-xs text-zinc-400 mt-0.5">
+                              Resp: <span className="text-zinc-300 font-medium">{adv.responsavel_nome}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {adv.responsavel_telefone && (
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-2.5 pl-1">
+                          <Phone className="w-3.5 h-3.5 text-zinc-500" />
+                          <span>{adv.responsavel_telefone}</span>
+                        </div>
+                      )}
+
+                      {adv.observacoes && (
+                        <p className="text-[11px] text-zinc-500 mt-2.5 bg-zinc-950/60 p-2 rounded-lg border border-zinc-800/80 italic">
+                          "{adv.observacoes}"
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between">
+                      <span className="text-[11px] text-zinc-500">
+                        {adv.partidas_count !== undefined
+                          ? `${adv.partidas_count} partida(s) vinculada(s)`
+                          : 'Pronto para agendamento'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            setEditingAdversario(adv);
+                            setAdversarioForm({
+                              nome: adv.nome,
+                              responsavel_nome: adv.responsavel_nome || '',
+                              responsavel_telefone: adv.responsavel_telefone || '',
+                              cor_uniforme_principal: adv.cor_uniforme_principal || '',
+                              escudo_url: adv.escudo_url || '',
+                              observacoes: adv.observacoes || '',
+                            });
+                            setModalAdversarioOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition"
+                          title="Editar Adversário"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleToggleAdversarioStatus(adv)}
+                          className={`p-1.5 rounded-lg transition ${
+                            adv.ativo
+                              ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400'
+                              : 'bg-emerald-950/60 text-emerald-400 hover:bg-emerald-900/60'
+                          }`}
+                          title={adv.ativo ? 'Desativar Adversário' : 'Reativar Adversário'}
+                        >
+                          <Power className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {adversarios.length === 0 && (
+              <div className="text-center py-12 bg-zinc-900/30 rounded-2xl border border-zinc-800 text-zinc-500">
+                <Swords className="w-8 h-8 mx-auto mb-2 text-zinc-600" />
+                <p className="text-xs font-semibold">Nenhum adversário cadastrado ainda.</p>
+                <p className="text-[11px] mt-1 text-zinc-600">
+                  Clique em "Novo Adversário" para cadastrar equipes rivais e parceiras de confronto.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* ABA 4: CAIXA GERAL */}
         {/* ========================================================= */}
         {activeTab === 'caixa' && (
@@ -1445,10 +1684,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
             <h3 className="font-bold text-sm text-zinc-100 mb-4">Agendar Nova Partida</h3>
             <form onSubmit={handleSavePartida} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Nome do Adversário</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-semibold text-zinc-400">
+                    Selecionar Adversário Cadastrado
+                  </label>
+                  {adversarios.length > 0 && (
+                    <span className="text-[10px] text-emerald-400 font-medium">Preenchimento automático</span>
+                  )}
+                </div>
+                {adversarios.length > 0 && (
+                  <select
+                    value={partidaForm.adversario_id || ''}
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      const selected = adversarios.find((a) => a.id === selId);
+                      if (selected) {
+                        setPartidaForm({
+                          ...partidaForm,
+                          adversario_id: selected.id,
+                          adversario: selected.nome,
+                        });
+                      } else {
+                        setPartidaForm({
+                          ...partidaForm,
+                          adversario_id: '',
+                        });
+                      }
+                    }}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 mb-2"
+                  >
+                    <option value="">Selecione um adversário pré-cadastrado...</option>
+                    {adversarios
+                      .filter((a) => a.ativo)
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.nome} {a.cor_uniforme_principal ? `(${a.cor_uniforme_principal})` : ''}
+                        </option>
+                      ))}
+                  </select>
+                )}
                 <input
                   type="text"
                   required
+                  placeholder="Ex: União Alvinegra F.C."
                   value={partidaForm.adversario}
                   onChange={(e) => setPartidaForm({ ...partidaForm, adversario: e.target.value })}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
@@ -1859,6 +2137,107 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
                 >
                   {editingLocal ? 'Salvar Alterações' : 'Cadastrar Local'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Novo / Editar Adversário */}
+      {modalAdversarioOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-in fade-in zoom-in-95">
+            <h3 className="font-bold text-sm text-zinc-100 mb-4">
+              {editingAdversario ? 'Editar Adversário' : 'Novo Adversário / Rival'}
+            </h3>
+            <form onSubmit={handleSaveAdversario} className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                  Nome do Time / Clube Adversário
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: União Alvinegra F.C."
+                  value={adversarioForm.nome}
+                  onChange={(e) => setAdversarioForm({ ...adversarioForm, nome: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Responsável / Contato</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Carlos (Capitão)"
+                    value={adversarioForm.responsavel_nome}
+                    onChange={(e) => setAdversarioForm({ ...adversarioForm, responsavel_nome: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Telefone / WhatsApp</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: (11) 98765-4321"
+                    value={adversarioForm.responsavel_telefone}
+                    onChange={(e) => setAdversarioForm({ ...adversarioForm, responsavel_telefone: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Cor do Uniforme Principal</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Preto e Branco"
+                    value={adversarioForm.cor_uniforme_principal}
+                    onChange={(e) => setAdversarioForm({ ...adversarioForm, cor_uniforme_principal: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1">URL do Escudo / Logo</label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={adversarioForm.escudo_url}
+                    onChange={(e) => setAdversarioForm({ ...adversarioForm, escudo_url: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                  Observações / Histórico de Confronto
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Ex: Time de contra-ataque rápido, bom relacionamento esportivo."
+                  value={adversarioForm.observacoes}
+                  onChange={(e) => setAdversarioForm({ ...adversarioForm, observacoes: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalAdversarioOpen(false)}
+                  className="px-3 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-zinc-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
+                >
+                  {editingAdversario ? 'Salvar Alterações' : 'Cadastrar Adversário'}
                 </button>
               </div>
             </form>

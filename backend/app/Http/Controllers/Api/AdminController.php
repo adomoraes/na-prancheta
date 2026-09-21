@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Adversario;
 use App\Models\Atleta;
 use App\Models\CaixaMovimentacao;
 use App\Models\ItemAlmoxarifado;
@@ -240,7 +241,7 @@ class AdminController extends Controller
 
     public function indexPartidas(Request $request): JsonResponse
     {
-        $partidas = Partida::with('local')
+        $partidas = Partida::with(['local', 'adversarioRel'])
             ->orderByDesc('data_partida')
             ->get();
 
@@ -250,6 +251,7 @@ class AdminController extends Controller
     public function storePartida(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'adversario_id' => 'nullable|uuid|exists:adversarios,id',
             'adversario' => 'required|string|max:255',
             'data_partida' => 'required|date',
             'horario_inicio' => 'required|string',
@@ -273,6 +275,7 @@ class AdminController extends Controller
         $partida = Partida::create([
             'id' => (string) Str::uuid(),
             'time_id' => $time?->id,
+            'adversario_id' => $validated['adversario_id'] ?? null,
             'adversario' => $validated['adversario'],
             'data_partida' => $validated['data_partida'],
             'horario_inicio' => $validated['horario_inicio'],
@@ -301,6 +304,7 @@ class AdminController extends Controller
         $partida = Partida::findOrFail($id);
 
         $validated = $request->validate([
+            'adversario_id' => 'nullable|uuid|exists:adversarios,id',
             'adversario' => 'sometimes|required|string|max:255',
             'data_partida' => 'sometimes|required|date',
             'horario_inicio' => 'sometimes|required|string',
@@ -554,6 +558,99 @@ class AdminController extends Controller
         return response()->json([
             'message' => $novoStatus ? 'Local reativado com sucesso.' : 'Local desativado com sucesso.',
             'local' => $local
+        ]);
+    }
+
+    // ==========================================
+    // 7. GESTÃO DE ADVERSÁRIOS & RIVAIS
+    // ==========================================
+
+    public function indexAdversarios(Request $request): JsonResponse
+    {
+        $adversarios = Adversario::withCount('partidas')
+            ->orderBy('nome')
+            ->get();
+
+        return response()->json($adversarios);
+    }
+
+    public function storeAdversario(Request $request): JsonResponse
+    {
+        $time = Time::first();
+
+        $validated = $request->validate([
+            'nome' => [
+                'required',
+                'string',
+                'max:150',
+                \Illuminate\Validation\Rule::unique('adversarios', 'nome')->where('time_id', $time?->id),
+            ],
+            'responsavel_nome' => 'nullable|string|max:100',
+            'responsavel_telefone' => 'nullable|string|max:20',
+            'cor_uniforme_principal' => 'nullable|string|max:50',
+            'escudo_url' => 'nullable|string|url',
+            'observacoes' => 'nullable|string',
+            'ativo' => 'nullable|boolean',
+        ]);
+
+        $adversario = Adversario::create([
+            'id' => (string) Str::uuid(),
+            'time_id' => $time?->id,
+            'nome' => $validated['nome'],
+            'responsavel_nome' => $validated['responsavel_nome'] ?? null,
+            'responsavel_telefone' => $validated['responsavel_telefone'] ?? null,
+            'cor_uniforme_principal' => $validated['cor_uniforme_principal'] ?? null,
+            'escudo_url' => $validated['escudo_url'] ?? null,
+            'observacoes' => $validated['observacoes'] ?? null,
+            'ativo' => $validated['ativo'] ?? true,
+        ]);
+
+        return response()->json([
+            'message' => 'Adversário cadastrado com sucesso.',
+            'adversario' => $adversario
+        ], 201);
+    }
+
+    public function updateAdversario(Request $request, string $id): JsonResponse
+    {
+        $adversario = Adversario::findOrFail($id);
+        $time = Time::first();
+
+        $validated = $request->validate([
+            'nome' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:150',
+                \Illuminate\Validation\Rule::unique('adversarios', 'nome')
+                    ->where('time_id', $time?->id)
+                    ->ignore($adversario->id),
+            ],
+            'responsavel_nome' => 'nullable|string|max:100',
+            'responsavel_telefone' => 'nullable|string|max:20',
+            'cor_uniforme_principal' => 'nullable|string|max:50',
+            'escudo_url' => 'nullable|string|url',
+            'observacoes' => 'nullable|string',
+            'ativo' => 'sometimes|boolean',
+        ]);
+
+        $adversario->update($validated);
+
+        return response()->json([
+            'message' => 'Adversário atualizado com sucesso.',
+            'adversario' => $adversario
+        ]);
+    }
+
+    public function toggleAdversarioStatus(string $id): JsonResponse
+    {
+        $adversario = Adversario::findOrFail($id);
+        $novoStatus = !$adversario->ativo;
+        $adversario->update(['ativo' => $novoStatus]);
+
+        return response()->json([
+            'message' => $novoStatus ? 'Adversário reativado com sucesso.' : 'Adversário desativado com sucesso.',
+            'adversario' => $adversario
         ]);
     }
 }

@@ -64,6 +64,8 @@ import {
   AdminPatrimonioDTO,
   Local,
   AdminLocalDTO,
+  Adversario,
+  AdminAdversarioDTO,
 } from '../types';
 
 export const api = {
@@ -349,6 +351,12 @@ export const api = {
     return request<Local[]>(`/locais${query}`);
   },
 
+  // 9.1 ADVERSÁRIOS & RIVAIS (Leitura pública / formulário de agendamento)
+  async getAdversarios(timeId?: string): Promise<Adversario[]> {
+    const query = timeId ? `?time_id=${timeId}` : '';
+    return request<Adversario[]>(`/adversarios${query}`);
+  },
+
   // 10. PAINEL ADMINISTRATIVO ROOT (CRUDs Master)
   admin: {
     // 10.1 Usuários & Roles
@@ -436,8 +444,10 @@ export const api = {
 
     async createPartida(payload: {
       adversario: string;
+      adversario_id?: string;
       data_partida: string;
       horario_inicio: string;
+      local_id?: string;
       local_nome: string;
       local_endereco?: string;
       local_maps_url?: string;
@@ -541,6 +551,38 @@ export const api = {
 
     async toggleLocalStatus(id: string) {
       return request<{ message: string; local: AdminLocalDTO }>(`/admin/locais/${id}/status`, {
+        method: 'PATCH',
+      });
+    },
+
+    // 10.7 Adversários & Rivais
+    async getAdversarios(): Promise<AdminAdversarioDTO[]> {
+      return request<AdminAdversarioDTO[]>('/admin/adversarios');
+    },
+
+    async createAdversario(payload: {
+      nome: string;
+      responsavel_nome?: string;
+      responsavel_telefone?: string;
+      cor_uniforme_principal?: string;
+      escudo_url?: string;
+      observacoes?: string;
+    }) {
+      return request<{ message: string; adversario: AdminAdversarioDTO }>('/admin/adversarios', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateAdversario(id: string, payload: Partial<AdminAdversarioDTO>) {
+      return request<{ message: string; adversario: AdminAdversarioDTO }>(`/admin/adversarios/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async toggleAdversarioStatus(id: string) {
+      return request<{ message: string; adversario: AdminAdversarioDTO }>(`/admin/adversarios/${id}/status`, {
         method: 'PATCH',
       });
     },

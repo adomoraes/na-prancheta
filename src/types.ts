@@ -154,6 +154,7 @@ export interface AdminAtletaDTO {
 export interface AdminPartidaDTO {
   id: string;
   local_id?: string | null;
+  adversario_id?: string | null;
   adversario: string;
   data_partida: string;
   horario_inicio: string;
@@ -176,11 +177,28 @@ export interface Local {
   tipo_piso: string;
   observacoes?: string | null;
   ativo: boolean;
+  partidas_count?: number;
   created_at?: string;
   updated_at?: string;
 }
 
 export type AdminLocalDTO = Local;
+
+export interface Adversario {
+  id: string;
+  nome: string;
+  responsavel_nome?: string | null;
+  responsavel_telefone?: string | null;
+  cor_uniforme_principal?: string | null;
+  escudo_url?: string | null;
+  observacoes?: string | null;
+  ativo: boolean;
+  partidas_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type AdminAdversarioDTO = Adversario;
 
 export interface AdminCaixaMovimentacaoDTO {
   id: string;

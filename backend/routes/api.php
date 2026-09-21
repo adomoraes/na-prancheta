@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdversarioController;
 use App\Http\Controllers\Api\AlmoxarifadoController;
 use App\Http\Controllers\Api\AtletaController;
 use App\Http\Controllers\Api\AuthController;
@@ -30,6 +31,9 @@ Route::post('/atletas', [AtletaController::class, 'store'])->middleware('auth:sa
 
 // 2.1 LOCAIS & CAMPOS (Leitura pública)
 Route::get('/locais', [LocalController::class, 'index']);
+
+// 2.2 ADVERSÁRIOS & RIVAIS (Leitura pública)
+Route::get('/adversarios', [AdversarioController::class, 'index']);
 
 // 3. PARTIDAS & VESTIÁRIO
 Route::prefix('partidas/{id}')->group(function () {
@@ -98,4 +102,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:root'])->group(functio
     Route::post('/locais', [AdminController::class, 'storeLocal']);
     Route::put('/locais/{id}', [AdminController::class, 'updateLocal']);
     Route::patch('/locais/{id}/status', [AdminController::class, 'toggleLocalStatus']);
+
+    // 4.7 Adversários & Rivais
+    Route::get('/adversarios', [AdminController::class, 'indexAdversarios']);
+    Route::post('/adversarios', [AdminController::class, 'storeAdversario']);
+    Route::put('/adversarios/{id}', [AdminController::class, 'updateAdversario']);
+    Route::patch('/adversarios/{id}/status', [AdminController::class, 'toggleAdversarioStatus']);
 });
