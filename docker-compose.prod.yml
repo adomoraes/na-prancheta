@@ -1,0 +1,95 @@
+# ==============================================================================
+# ⚽ Na Prancheta — Docker Compose de Produção (VPS / Coolify)
+# ==============================================================================
+# Stack completa de produção:
+# 1. postgres: Banco de dados relacional com volume persistente
+# 2. backend:  API REST Laravel 11 com Nginx e PHP 8.2-FPM
+# 3. frontend: SPA React 19 + PWA servida por Nginx estático
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Banco de Dados PostgreSQL 16
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: na_prancheta_db_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-na_prancheta}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_prod_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - na_prancheta_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-na_prancheta}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 2. Backend API Laravel 11 (PHP 8.2 + Nginx)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: na_prancheta_api_prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME:-Na Prancheta}
+      APP_ENV: production
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-na_prancheta}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres_prod_secret}
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-}
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "${API_PORT:-8000}:80"
+    volumes:
+      - backend_storage:/var/www/html/storage
+    networks:
+      - na_prancheta_net
+
+  # ----------------------------------------------------------------------------
+  # 3. Frontend Web SPA React 19 + PWA (Nginx)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
+    container_name: na_prancheta_web_prod
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    networks:
+      - na_prancheta_net
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_storage:
+    driver: local
+
+networks:
+  na_prancheta_net:
+    driver: bridge
