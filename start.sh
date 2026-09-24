@@ -49,6 +49,15 @@ fi
 echo -e "   ${DIM}✔ Node.js $(node -v) / npm $(npm -v)${NC}"
 echo -e "   ${DIM}✔ PHP $(php -r 'echo PHP_VERSION;') / Composer $(composer -V | awk '{print $3}')${NC}"
 
+# Validação das extensões de banco de dados do PHP
+if ! php -m | grep -qiE "pdo_sqlite|pdo_pgsql"; then
+    echo -e "${RED}❌ Extensão PDO do banco de dados não encontrada no PHP!${NC}"
+    echo -e "${YELLOW}O Laravel precisa do driver SQLite (pdo_sqlite) ou PostgreSQL (pdo_pgsql) para conectar ao banco.${NC}"
+    echo -e "${YELLOW}Para resolver, execute no seu terminal:${NC}"
+    echo -e "   ${BOLD}${GREEN}sudo apt install -y php8.3-sqlite3 php8.3-pgsql${NC}"
+    exit 1
+fi
+
 # ------------------------------------------------------------------------------
 # 2. Inicialização do Banco de Dados PostgreSQL (Docker)
 # ------------------------------------------------------------------------------
@@ -118,13 +127,17 @@ if [ ! -d "$BACKEND_DIR/vendor" ]; then
 fi
 
 # Executar migrations se necessário
-php "$BACKEND_DIR/artisan" migrate --force >/dev/null 2>&1 || true
+if ! php "$BACKEND_DIR/artisan" migrate --force; then
+    echo -e "${RED}❌ Falha ao executar as migrations do Laravel.${NC}"
+    echo -e "${YELLOW}Verifique os drivers do PHP ou a conexão com o banco em backend/.env.${NC}"
+    exit 1
+fi
 
 # Seed inicial se banco estiver sem dados de partida
 PARTIDA_COUNT=$(php "$BACKEND_DIR/artisan" tinker --execute="echo App\\Models\\Partida::count();" 2>/dev/null || echo "1")
 if [ "$PARTIDA_COUNT" = "0" ]; then
     echo -e "   ${YELLOW}Banco vazio. Executando seed com dados da partida teste...${NC}"
-    php "$BACKEND_DIR/artisan" db:seed --class=LegacyInitialDataSeeder --force >/dev/null 2>&1 || true
+    php "$BACKEND_DIR/artisan" db:seed --class=LegacyInitialDataSeeder --force
 fi
 
 echo -e "   ${GREEN}✔ Backend pronto!${NC}"
