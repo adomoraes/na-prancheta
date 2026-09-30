@@ -7,6 +7,10 @@ echo "⚽ [Na Prancheta] Inicializando Backend Laravel..."
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Limpa manifests de pacotes cacheados para regenerar no ambiente atual
+rm -f /var/www/html/bootstrap/cache/*.php
+php artisan package:discover --ansi || true
+
 # Otimizações de Cache do Laravel para Produção
 if [ "$APP_ENV" = "production" ]; then
     echo "⚡ Otimizando caches de configuração e rotas..."
