@@ -17,6 +17,16 @@ function getApiBaseUrl(): string {
   return url;
 }
 
+export function getApiDocsUrl(): string {
+  const baseUrl = getApiBaseUrl().replace(/\/api\/?$/, '');
+  return `${baseUrl}/docs/api`;
+}
+
+export function getOpenApiSpecUrl(): string {
+  const baseUrl = getApiBaseUrl().replace(/\/api\/?$/, '');
+  return `${baseUrl}/docs/api.json`;
+}
+
 const TOKEN_KEY = 'na_prancheta_token';
 
 function getHeaders(): Record<string, string> {
@@ -682,6 +692,10 @@ export const api = {
       return request<{ success: boolean; data: any }>(`/admin/leads/investor${qs}`);
     },
   },
+
+  // 11. DOCUMENTAÇÃO INTERATIVA DA API (SWAGGER / ELEMENTS)
+  getDocsUrl: getApiDocsUrl,
+  getOpenApiUrl: getOpenApiSpecUrl,
 };
 
 
