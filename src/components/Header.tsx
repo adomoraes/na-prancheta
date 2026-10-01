@@ -15,7 +15,10 @@ import {
   Sparkles,
   KeyRound,
   Settings2,
+  FileCode2,
+  ExternalLink,
 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface HeaderProps {
   onOpenOnboarding: () => void;
@@ -288,6 +291,18 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>{currentView === 'admin' ? 'Voltar ao Dia de Jogo' : 'Painel Admin ROOT'}</span>
                     </button>
                   )}
+
+                  <a
+                    href={api.getDocsUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 rounded-lg transition font-medium"
+                  >
+                    <FileCode2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="flex-1 text-left">Docs da API (Swagger)</span>
+                    <ExternalLink className="w-3 h-3 text-emerald-400/70" />
+                  </a>
 
                   <button
                     onClick={() => {

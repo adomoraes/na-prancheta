@@ -564,7 +564,7 @@ class AdminController extends Controller
                 'max:255',
                 \Illuminate\Validation\Rule::unique('locais', 'nome')
                     ->where('time_id', $time?->id)
-                    ->ignore($local->id),
+                    ->ignore($id),
             ],
             'endereco' => 'nullable|string|max:255',
             'maps_url' => 'nullable|string|url',
@@ -656,7 +656,7 @@ class AdminController extends Controller
                 'max:150',
                 \Illuminate\Validation\Rule::unique('adversarios', 'nome')
                     ->where('time_id', $time?->id)
-                    ->ignore($adversario->id),
+                    ->ignore($id),
             ],
             'responsavel_nome' => 'nullable|string|max:100',
             'responsavel_telefone' => 'nullable|string|max:20',
