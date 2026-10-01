@@ -3,7 +3,20 @@
  * Conecta o frontend React 19 desacoplado ao backend Laravel 11
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+function getApiBaseUrl(): string {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  if (
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    url.startsWith('http://') &&
+    !url.includes('localhost') &&
+    !url.includes('127.0.0.1')
+  ) {
+    url = url.replace('http://', 'https://');
+  }
+  return url;
+}
+
 const TOKEN_KEY = 'na_prancheta_token';
 
 function getHeaders(): Record<string, string> {
@@ -19,7 +32,7 @@ function getHeaders(): Record<string, string> {
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${getApiBaseUrl()}${endpoint}`;
   const response = await fetch(url, {
     ...options,
     headers: {
