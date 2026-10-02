@@ -9,8 +9,10 @@ class ApiDocumentationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['database.default' => 'sqlite']);
-        config(['database.connections.sqlite.database' => database_path('database.sqlite')]);
+        if (extension_loaded('pdo_sqlite')) {
+            config(['database.default' => 'sqlite']);
+            config(['database.connections.sqlite.database' => database_path('database.sqlite')]);
+        }
     }
     /**
      * Testa se a rota da UI interativa da documentação responde com sucesso.
