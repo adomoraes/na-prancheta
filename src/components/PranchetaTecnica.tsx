@@ -140,29 +140,29 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
         </span>
       </div>
 
-      {/* Visualização de Campo Sintético / Gramado */}
-      <div className="relative w-full rounded-2xl bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 p-4 sm:p-6 border border-zinc-800 shadow-inner overflow-hidden mb-5">
+      {/* Visualização de Campo Sintético / Gramado Adaptativo Vertical */}
+      <div className="relative w-full rounded-2xl bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 p-2 sm:p-5 border border-zinc-800 shadow-inner overflow-hidden mb-5 select-none">
         {/* Linhas do Campo */}
         <div className="absolute inset-2 border border-white/15 rounded-xl pointer-events-none" />
         <div className="absolute top-1/2 left-2 right-2 h-0.5 bg-white/15 -translate-y-1/2 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border border-white/15 rounded-full pointer-events-none" />
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-44 h-16 border-b border-x border-white/15 rounded-b pointer-events-none" />
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-44 h-16 border-t border-x border-white/15 rounded-t pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 sm:w-24 h-20 sm:h-24 border border-white/15 rounded-full pointer-events-none" />
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-36 sm:w-44 h-14 sm:h-16 border-b border-x border-white/15 rounded-b pointer-events-none" />
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-36 sm:w-44 h-14 sm:h-16 border-t border-x border-white/15 rounded-t pointer-events-none" />
 
-        {/* Posicionamento dos Atletas no Campo */}
-        <div className="relative z-10 flex flex-col justify-between h-[420px] py-2">
+        {/* Posicionamento dos Atletas no Campo - Proporcional e Fluido */}
+        <div className="relative z-10 flex flex-col justify-between min-h-[440px] sm:min-h-[480px] py-3">
           {/* Ataque (Pontas e Centroavante) */}
-          <div className="flex justify-around items-center px-4">
+          <div className="flex justify-around items-center px-1 sm:px-4">
             {titulares.slice(8, 11).map((atleta) => (
               <div
                 key={atleta.id}
                 onClick={() => toggleTitular(atleta)}
-                className="group cursor-pointer flex flex-col items-center transition transform hover:scale-105"
+                className="group cursor-pointer flex flex-col items-center transition transform active:scale-95 touch-target p-1"
               >
-                <div className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-emerald-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-zinc-900 border-2 border-emerald-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
                   {atleta.numero_camisa}
                 </div>
-                <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded mt-1 shadow truncate max-w-[80px]">
+                <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded mt-1 shadow truncate max-w-[65px] sm:max-w-[85px] text-center">
                   {atleta.apelido || atleta.nome}
                 </span>
                 <span className="text-[9px] text-emerald-400 font-semibold">{atleta.posicao_principal}</span>
@@ -171,17 +171,17 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
           </div>
 
           {/* Meio-Campo (3 meias) */}
-          <div className="flex justify-around items-center px-6">
+          <div className="flex justify-around items-center px-2 sm:px-6">
             {titulares.slice(5, 8).map((atleta) => (
               <div
                 key={atleta.id}
                 onClick={() => toggleTitular(atleta)}
-                className="group cursor-pointer flex flex-col items-center transition transform hover:scale-105"
+                className="group cursor-pointer flex flex-col items-center transition transform active:scale-95 touch-target p-1"
               >
-                <div className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-blue-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-zinc-900 border-2 border-blue-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
                   {atleta.numero_camisa}
                 </div>
-                <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded mt-1 shadow truncate max-w-[80px]">
+                <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded mt-1 shadow truncate max-w-[65px] sm:max-w-[85px] text-center">
                   {atleta.apelido || atleta.nome}
                 </span>
                 <span className="text-[9px] text-blue-400 font-semibold">{atleta.posicao_principal}</span>
@@ -190,20 +190,20 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
           </div>
 
           {/* Defesa (4 defensores) */}
-          <div className="flex justify-around items-center px-2">
+          <div className="flex justify-between items-center px-1 sm:px-3">
             {titulares.slice(1, 5).map((atleta) => (
               <div
                 key={atleta.id}
                 onClick={() => toggleTitular(atleta)}
-                className="group cursor-pointer flex flex-col items-center transition transform hover:scale-105"
+                className="group cursor-pointer flex flex-col items-center transition transform active:scale-95 touch-target p-0.5"
               >
-                <div className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-amber-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 border-2 border-amber-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
                   {atleta.numero_camisa}
                 </div>
-                <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded mt-1 shadow truncate max-w-[70px]">
+                <span className="text-[9px] sm:text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1 py-0.5 rounded mt-1 shadow truncate max-w-[55px] sm:max-w-[75px] text-center">
                   {atleta.apelido || atleta.nome}
                 </span>
-                <span className="text-[9px] text-amber-400 font-semibold">{atleta.posicao_principal}</span>
+                <span className="text-[8px] sm:text-[9px] text-amber-400 font-semibold">{atleta.posicao_principal}</span>
               </div>
             ))}
           </div>
@@ -214,12 +214,12 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
               <div
                 key={atleta.id}
                 onClick={() => toggleTitular(atleta)}
-                className="group cursor-pointer flex flex-col items-center transition transform hover:scale-105"
+                className="group cursor-pointer flex flex-col items-center transition transform active:scale-95 touch-target p-1"
               >
-                <div className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-purple-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-zinc-900 border-2 border-purple-500/80 text-zinc-100 font-black text-xs flex items-center justify-center shadow-md group-hover:border-white">
                   {atleta.numero_camisa}
                 </div>
-                <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded mt-1 shadow truncate max-w-[80px]">
+                <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900/90 border border-zinc-800 px-1.5 py-0.5 rounded mt-1 shadow truncate max-w-[75px] sm:max-w-[90px] text-center">
                   {atleta.apelido || atleta.nome}
                 </span>
                 <span className="text-[9px] text-purple-400 font-semibold">Goleiro Titular</span>
@@ -230,16 +230,16 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
       </div>
 
       {/* Banco de Reservas & Regra de Atraso */}
-      <div className="bg-zinc-950/80 p-4 rounded-xl border border-zinc-800/80">
+      <div className="bg-zinc-950/80 p-3 sm:p-4 rounded-xl border border-zinc-800/80">
         <div className="flex items-center justify-between mb-3">
           <div className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
             <Users className="w-4 h-4 text-zinc-400" />
             <span>Banco de Reservas ({reservas.length} atletas)</span>
           </div>
-          <span className="text-[11px] text-zinc-400">Toque para promover a titular</span>
+          <span className="text-[11px] text-zinc-400 hidden sm:inline">Toque para promover a titular</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
           {reservas.map((atleta) => {
             const isLate = atleta.chegou_em?.includes('Atrasado');
 
@@ -247,29 +247,27 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
               <div
                 key={atleta.id}
                 onClick={() => toggleTitular(atleta)}
-                className={`p-2.5 rounded-xl border cursor-pointer transition ${
+                className={`min-h-[48px] p-2.5 rounded-xl border cursor-pointer transition active:scale-[0.98] flex items-center justify-between ${
                   isLate
-                    ? 'bg-red-500/10 border-red-500/30 hover:border-red-500/50'
-                    : 'bg-zinc-900/80 border-zinc-800/80 hover:border-zinc-700'
+                    ? 'bg-rose-950/20 border-rose-900/40 text-rose-300 hover:bg-rose-950/30'
+                    : 'bg-zinc-900/90 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-zinc-100">
-                    #{atleta.numero_camisa} {atleta.apelido || atleta.nome}
-                  </span>
-                  {isLate ? (
-                    <span className="text-[9px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
-                      Regra T-35
-                    </span>
-                  ) : (
-                    <span className="text-[9px] text-zinc-400">{atleta.tipo_vinculo}</span>
-                  )}
-                </div>
-                <div className="text-[11px] text-zinc-400">{atleta.posicao_principal}</div>
-                {isLate && (
-                  <div className="text-[10px] text-red-300 mt-1 font-medium">
-                    Chegou após T-35 (Banco Compulsório)
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs shrink-0">
+                    {atleta.numero_camisa || '-'}
                   </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate leading-tight">
+                      {atleta.apelido || atleta.nome}
+                    </p>
+                    <p className="text-[10px] text-zinc-400">{atleta.posicao_principal}</p>
+                  </div>
+                </div>
+                {isLate && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">
+                    Atrasado
+                  </span>
                 )}
               </div>
             );
@@ -279,3 +277,4 @@ export const PranchetaTecnica: React.FC<PranchetaTecnicaProps> = ({
     </div>
   );
 };
+

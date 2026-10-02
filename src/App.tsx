@@ -33,6 +33,8 @@ import { PwaPrompt } from './components/PwaPrompt';
 import { usePwa } from './hooks/usePwa';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LandingPage } from './components/landing/LandingPage';
+import { MobileNavigation } from './components/navigation/MobileNavigation';
+import { BottomSheet } from './components/ui/BottomSheet';
 import { Calendar, Shield, DollarSign, Trophy, Package, Lock } from 'lucide-react';
 
 function AppContent() {
@@ -67,7 +69,38 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<'match' | 'admin'>('match');
   const [activeTab, setActiveTab] = useState<'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado'>('jogo');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
+  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState<boolean>(false);
   const [apiConnected, setApiConnected] = useState<boolean>(false);
+
+  // Detecção de teclado virtual móvel para auto-ocultação da Bottom Navigation Bar (D-03)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleViewportChange = () => {
+      if (window.visualViewport) {
+        // Se a altura visual do viewport encolhe mais de 120px, o teclado está aberto
+        const isKeyboard = window.innerHeight - window.visualViewport.height > 120;
+        if (isKeyboard) {
+          document.body.classList.add('keyboard-open');
+        } else {
+          document.body.classList.remove('keyboard-open');
+        }
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      }
+      document.body.classList.remove('keyboard-open');
+    };
+  }, []);
 
   // Guarda de navegação: exige autenticação para abas operacionais protegidas
   const handleTabSelect = (tab: 'jogo' | 'tatica' | 'financeiro' | 'scout' | 'almoxarifado') => {
@@ -456,13 +489,13 @@ function AppContent() {
         onGoToLanding={handleGoToLanding}
       />
 
-      {/* Conteúdo Principal */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 pb-24">
+      {/* Conteúdo Principal com padding inferior responsivo para acomodar a Bottom Navigation */}
+      <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-6 pb-safe-nav md:pb-16">
         {/* Protocolo Oficial de Vestiário (T-50, T-35, T-25) */}
         <VestiarioTimeline evento={evento} />
 
-        {/* Abas Superiores Mobile & Desktop com Indicadores de Responsabilidade */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none border-b border-zinc-800/80">
+        {/* Abas Superiores Desktop (ocultas no mobile, onde vigora a Bottom Navigation Bar com 5 destinos e gaveta inferior) */}
+        <div className="hidden md:flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none border-b border-zinc-800/80">
           <button
             onClick={() => handleTabSelect('jogo')}
             className={`min-h-[42px] px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap active:scale-[0.98] ${
@@ -600,58 +633,143 @@ function AppContent() {
           ))}
       </main>
 
-      {/* Barra de Navegação Inferior Fixa Mobile (PWA Feel) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800/80 px-2 py-1.5 flex justify-around items-center">
-        <button
-          onClick={() => handleTabSelect('jogo')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
-            activeTab === 'jogo' ? 'text-emerald-400 font-bold' : 'text-zinc-400'
-          }`}
-        >
-          <Calendar className="w-5 h-5 mb-0.5" />
-          <span>Jogo</span>
-        </button>
+      {/* Barra de Navegação Inferior Fixa Mobile-First (D-01, D-02, D-03) */}
+      <MobileNavigation
+        activeTab={
+          activeTab === 'jogo'
+            ? 'vestiario'
+            : activeTab === 'tatica'
+            ? 'tatica'
+            : activeTab === 'financeiro'
+            ? 'caixa'
+            : 'mais'
+        }
+        onTabChange={(tab) => {
+          if (tab === 'vestiario') {
+            setActiveTab('jogo');
+          } else if (tab === 'presenca') {
+            setActiveTab('jogo');
+          } else if (tab === 'tatica') {
+            handleTabSelect('tatica');
+          } else if (tab === 'caixa') {
+            handleTabSelect('financeiro');
+          } else if (tab === 'mais') {
+            setIsMoreSheetOpen(true);
+          }
+        }}
+        confirmadosCount={presencas.filter((p) => p.status === 'confirmado').length}
+        totalConvocados={presencas.length}
+        caixaPendente={coletas.some((c) => !c.pago)}
+      />
 
-        <button
-          onClick={() => handleTabSelect('tatica')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
-            activeTab === 'tatica' ? 'text-blue-400 font-bold' : 'text-zinc-400'
-          }`}
-        >
-          <Shield className="w-5 h-5 mb-0.5" />
-          <span>Prancheta</span>
-        </button>
+      {/* Gaveta Inferior (Bottom Sheet) para Ações Secundárias & Módulos Extras */}
+      <BottomSheet
+        isOpen={isMoreSheetOpen}
+        onClose={() => setIsMoreSheetOpen(false)}
+        title="Módulos & Atalhos"
+        subtitle="Acesso rápido a todas as áreas operacionais do clube"
+      >
+        <div className="grid grid-cols-1 gap-2.5 pb-2">
+          {/* Almoxarifado */}
+          <button
+            onClick={() => {
+              setIsMoreSheetOpen(false);
+              handleTabSelect('almoxarifado');
+            }}
+            className="touch-target p-3.5 rounded-2xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 flex items-center justify-between text-left transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center shrink-0">
+                <Package className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-zinc-100">Almoxarifado & Malas</p>
+                <p className="text-xs text-zinc-400">Trava da Resenha e contagem de fardamento</p>
+              </div>
+            </div>
+            {!canAccessTab('almoxarifado') && <Lock className="w-4 h-4 text-zinc-500" />}
+          </button>
 
-        <button
-          onClick={() => handleTabSelect('financeiro')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
-            activeTab === 'financeiro' ? 'text-amber-400 font-bold' : 'text-zinc-400'
-          }`}
-        >
-          <DollarSign className="w-5 h-5 mb-0.5" />
-          <span>Vaquinha</span>
-        </button>
+          {/* Scouts */}
+          <button
+            onClick={() => {
+              setIsMoreSheetOpen(false);
+              handleTabSelect('scout');
+            }}
+            className="touch-target p-3.5 rounded-2xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 flex items-center justify-between text-left transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-zinc-100">Scout Pós-Jogo & MVP</p>
+                <p className="text-xs text-zinc-400">Gols, assistências, cartões e notas</p>
+              </div>
+            </div>
+            {!canAccessTab('scout') && <Lock className="w-4 h-4 text-zinc-500" />}
+          </button>
 
-        <button
-          onClick={() => handleTabSelect('scout')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
-            activeTab === 'scout' ? 'text-purple-400 font-bold' : 'text-zinc-400'
-          }`}
-        >
-          <Trophy className="w-5 h-5 mb-0.5" />
-          <span>Scout</span>
-        </button>
+          {/* Painel Admin ROOT (Se autorizado) */}
+          {user?.role === 'root' && (
+            <button
+              onClick={() => {
+                setIsMoreSheetOpen(false);
+                setCurrentView('admin');
+              }}
+              className="touch-target p-3.5 rounded-2xl bg-rose-950/20 hover:bg-rose-950/30 border border-rose-900/40 flex items-center justify-between text-left transition active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-rose-200">Painel Master ROOT</p>
+                  <p className="text-xs text-rose-400/80">Gestão global de usuários, atletas e partidas</p>
+                </div>
+              </div>
+            </button>
+          )}
 
-        <button
-          onClick={() => handleTabSelect('almoxarifado')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-semibold transition ${
-            activeTab === 'almoxarifado' ? 'text-pink-400 font-bold' : 'text-zinc-400'
-          }`}
-        >
-          <Package className="w-5 h-5 mb-0.5" />
-          <span>Malas</span>
-        </button>
-      </nav>
+          {/* Cadastrar Novo Atleta */}
+          <button
+            onClick={() => {
+              setIsMoreSheetOpen(false);
+              setIsOnboardingOpen(true);
+            }}
+            className="touch-target p-3.5 rounded-2xl bg-emerald-950/20 hover:bg-emerald-950/30 border border-emerald-900/40 flex items-center justify-between text-left transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-emerald-200">Cadastrar Novo Atleta</p>
+                <p className="text-xs text-emerald-400/80">Adicionar membro ao elenco com numeração</p>
+              </div>
+            </div>
+          </button>
+
+          {/* Vitrine Comercial & Investidores */}
+          <button
+            onClick={() => {
+              setIsMoreSheetOpen(false);
+              handleGoToLanding();
+            }}
+            className="touch-target p-3.5 rounded-2xl bg-zinc-800/40 hover:bg-zinc-800/70 border border-zinc-700/50 flex items-center justify-between text-left transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-zinc-200">Vitrine Comercial & Investidores</p>
+                <p className="text-xs text-zinc-400">Ver tese de mercado e diferenciais culturais</p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* Modal de Self-Onboarding do Atleta */}
       <SelfOnboardingModal

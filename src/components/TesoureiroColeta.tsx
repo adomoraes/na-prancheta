@@ -231,10 +231,10 @@ export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
           Checklist de Cobrança da Rodada
         </div>
 
-        <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800/80">
+        <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800/80">
           <button
             onClick={() => setFilter('todos')}
-            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+            className={`min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
               filter === 'todos' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -242,7 +242,7 @@ export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
           </button>
           <button
             onClick={() => setFilter('pendentes')}
-            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+            className={`min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
               filter === 'pendentes' ? 'bg-amber-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -250,7 +250,7 @@ export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
           </button>
           <button
             onClick={() => setFilter('pagos')}
-            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+            className={`min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
               filter === 'pagos' ? 'bg-emerald-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -259,7 +259,7 @@ export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
         </div>
       </div>
 
-      {/* Grid de Atletas com Botão Grande de Toggle Pago/Pendente */}
+      {/* Grid de Atletas com Botão Grande de Toggle Pago/Pendente (RN-04 - 48x48px) */}
       <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
         {filteredColetas.map((coleta) => {
           const atleta = presencas.find((p) => p.atleta_id === coleta.atleta_id)?.atleta;
@@ -299,10 +299,10 @@ export const TesoureiroColeta: React.FC<TesoureiroColetaProps> = ({
                 </div>
               </div>
 
-              {/* Botão de Toque Rápido Mobile (Mínimo 44px) */}
+              {/* Botão de Toque Rápido Mobile (RN-04: Mínimo 48px) */}
               <button
                 onClick={() => onTogglePago(coleta.atleta_id)}
-                className={`min-h-[44px] px-4 rounded-xl flex items-center gap-2 text-xs font-bold transition-all active:scale-[0.98] ${
+                className={`touch-target min-h-[48px] px-4 rounded-xl flex items-center gap-2 text-xs font-bold transition-all active:scale-95 ${
                   coleta.pago
                     ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20'
                     : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-sm font-extrabold'

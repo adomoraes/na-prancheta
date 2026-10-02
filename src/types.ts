@@ -303,3 +303,25 @@ export interface InvestorLeadResponse {
     created_at: string;
   };
 }
+
+// Tipos para Arquitetura Mobile-First & Navegação Inferior
+export type MobileTab = 'vestiario' | 'presenca' | 'tatica' | 'caixa' | 'mais';
+
+export interface MobileNavItem {
+  id: MobileTab;
+  label: string;
+  iconName: string;
+  badge?: number | string | null;
+  badgeVariant?: 'default' | 'alert' | 'success';
+}
+
+export interface BottomSheetAction {
+  id: string;
+  label: string;
+  description?: string;
+  iconName?: string;
+  badge?: string;
+  onClick: () => void;
+  variant?: 'default' | 'danger' | 'highlight';
+}
+

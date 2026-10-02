@@ -142,41 +142,41 @@ export const MatchCardConfirmacao: React.FC<MatchCardConfirmacaoProps> = ({
           </span>
         </div>
 
-        {/* 3 Botões Grandes Mobile (Altura mínima 52px para dedo) */}
-        <div className="grid grid-cols-3 gap-2.5">
+        {/* 3 Botões Grandes Mobile (Altura mínima 52px para dedo, RN-04) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
           <button
             onClick={() => onUpdatePresenca(currentAtletaId, 'confirmado')}
-            className={`min-h-[52px] rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all active:scale-[0.98] ${
+            className={`touch-target min-h-[52px] rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 font-bold text-xs sm:text-sm transition-all active:scale-95 ${
               statusAtual === 'confirmado'
                 ? 'bg-emerald-600 text-white ring-2 ring-emerald-400/40 shadow-sm'
                 : 'bg-zinc-900 text-zinc-300 border border-zinc-800 hover:bg-zinc-800'
             }`}
           >
-            <Check className="w-5 h-5 stroke-[2.5]" />
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             <span>Vou</span>
           </button>
 
           <button
             onClick={() => onUpdatePresenca(currentAtletaId, 'recusado')}
-            className={`min-h-[52px] rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all active:scale-[0.98] ${
+            className={`touch-target min-h-[52px] rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 font-bold text-xs sm:text-sm transition-all active:scale-95 ${
               statusAtual === 'recusado'
                 ? 'bg-red-600 text-white ring-2 ring-red-400/40 shadow-sm'
                 : 'bg-zinc-900 text-zinc-300 border border-zinc-800 hover:bg-zinc-800'
             }`}
           >
-            <X className="w-5 h-5 stroke-[2.5]" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             <span>Não Vou</span>
           </button>
 
           <button
             onClick={() => onUpdatePresenca(currentAtletaId, 'duvida')}
-            className={`min-h-[52px] rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all active:scale-[0.98] ${
+            className={`touch-target min-h-[52px] rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 font-bold text-xs sm:text-sm transition-all active:scale-95 ${
               statusAtual === 'duvida'
                 ? 'bg-amber-600 text-white ring-2 ring-amber-400/40 shadow-sm'
                 : 'bg-zinc-900 text-zinc-300 border border-zinc-800 hover:bg-zinc-800'
             }`}
           >
-            <HelpCircle className="w-5 h-5 stroke-[2.5]" />
+            <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             <span>Dúvida</span>
           </button>
         </div>

@@ -1,17 +1,17 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/010-landing-page-investidores",
-  "feature-id": "010",
-  "short-name": "landing-page-investidores",
-  "started-at": "2026-09-21T11:35:00Z",
-  "current-stage": "sync",
+  "feature-dir": "_reversa_forward/011-refatoracao-mobile-first",
+  "feature-id": "011",
+  "short-name": "refatoracao-mobile-first",
+  "started-at": "2026-10-02T12:30:00Z",
+  "current-stage": "done",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
     "to-do",
     "coding",
-    "test"
+    "sync"
   ],
   "paused-features": []
 }
