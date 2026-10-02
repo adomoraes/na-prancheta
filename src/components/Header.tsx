@@ -94,54 +94,42 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 text-zinc-100 px-4 py-3 shadow-sm">
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <header className="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 text-zinc-100 px-3 sm:px-4 py-2 sm:py-3 shadow-sm pt-safe">
+      <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 sm:gap-3 h-12 sm:h-auto">
         {/* Brand & Status */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shadow-sm">
-              <Shield className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-base sm:text-lg tracking-tight text-zinc-100 font-['Cabinet_Grotesk',sans-serif]">
-                  Na Prancheta
-                </h1>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Target v2.0
-                </span>
-                <span
-                  className={`text-[9px] font-semibold tracking-wide px-2 py-0.5 rounded-full flex items-center gap-1 border ${
-                    apiConnected
-                      ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
-                      : 'bg-amber-950/40 text-amber-400 border-amber-500/30'
-                  }`}
-                  title={
-                    apiConnected
-                      ? 'Conectado à API Laravel 11 com PostgreSQL 16'
-                      : 'Modo de contingência LocalStorage'
-                  }
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      apiConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                    }`}
-                  ></span>
-                  {apiConnected ? 'Laravel 11 + PG16' : 'Offline'}
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400">Gestão Esportiva & Vestiário Amador</p>
-            </div>
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shadow-sm shrink-0">
+            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
           </div>
-
-          <div className="flex items-center gap-2 sm:hidden">
-            <button
-              onClick={onOpenOnboarding}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-sm transition"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Cadastrar</span>
-            </button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="font-extrabold text-sm sm:text-lg tracking-tight text-zinc-100 font-['Cabinet_Grotesk',sans-serif] truncate">
+                Na Prancheta
+              </h1>
+              <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Target v2.0
+              </span>
+              <span
+                className={`text-[9px] font-semibold tracking-wide px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1 border shrink-0 ${
+                  apiConnected
+                    ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
+                    : 'bg-amber-950/40 text-amber-400 border-amber-500/30'
+                }`}
+                title={
+                  apiConnected
+                    ? 'Conectado à API Laravel 11 com PostgreSQL 16'
+                    : 'Modo de contingência LocalStorage'
+                }
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    apiConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                  }`}
+                ></span>
+                <span className="hidden sm:inline">{apiConnected ? 'Laravel 11 + PG16' : 'Offline'}</span>
+              </span>
+            </div>
+            <p className="hidden sm:block text-xs text-zinc-400">Gestão Esportiva & Vestiário Amador</p>
           </div>
         </div>
 

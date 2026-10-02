@@ -25,4 +25,42 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #3f3f46; /* zinc-700 */
   }
+
+  /* Mobile-first Safe Area & Touch Enhancements */
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+  }
+
+  /* Safe Area paddings */
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top, 0px), 8px);
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  }
+  .pb-safe-nav {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 12px) + 68px);
+  }
+
+  /* Thumb-friendly Touch Targets (RN-04) */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Keyboard-open state to auto-hide bottom navigation */
+  .keyboard-open .mobile-bottom-nav {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease-out;
+  }
+
+  /* Mobile bottom bar smooth transition */
+  .mobile-bottom-nav {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
+  }
 }
