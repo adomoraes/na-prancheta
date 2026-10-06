@@ -1,5 +1,5 @@
 {
-  "version": "1.3.3",
+  "version": "1.3.4",
   "project": "na-prancheta",
   "user_name": "Ado",
   "chat_language": "pt-br",
@@ -163,6 +163,7 @@
     "reversa-explorer",
     "reversa-extract-soul",
     "reversa-forward",
+    "reversa-forward-autonomous",
     "reversa-framer",
     "reversa-highcharts-visualizer",
     "reversa-ideator",
@@ -297,6 +298,7 @@
     ".reversa/config.user.toml",
     ".reversa/plan.md",
     ".reversa/version",
-    ".reversa/_config/manifest.yaml"
+    ".reversa/_config/manifest.yaml",
+    ".agents/skills/reversa-forward-autonomous"
   ]
 }
