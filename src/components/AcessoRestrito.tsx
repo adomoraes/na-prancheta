@@ -16,6 +16,7 @@ const ROLE_LABELS: Record<NivelAcesso, string> = {
   almoxarifado: 'Almoxarifado & Patrimônio',
   geral: 'Diretoria / Gestão Geral',
   root: 'Super Administrador ROOT',
+  gestor: 'Gestor da Agremiação (Whitelabel)',
 };
 
 export const AcessoRestrito: React.FC<AcessoRestritoProps> = ({
