@@ -18,6 +18,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'id',
+        'time_id',
         'name',
         'phone',
         'email',
@@ -38,6 +39,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function time(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Time::class, 'time_id');
     }
 
     public function atleta(): HasOne
@@ -110,5 +116,10 @@ class User extends Authenticatable
     public function isGeral(): bool
     {
         return $this->role === 'geral';
+    }
+
+    public function isGestor(): bool
+    {
+        return $this->role === 'gestor';
     }
 }

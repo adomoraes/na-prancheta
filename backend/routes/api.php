@@ -5,14 +5,23 @@ use App\Http\Controllers\Api\AdversarioController;
 use App\Http\Controllers\Api\AlmoxarifadoController;
 use App\Http\Controllers\Api\AtletaController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\EscalacaoController;
 use App\Http\Controllers\Api\InvestorLeadController;
 use App\Http\Controllers\Api\LocalController;
+use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\PartidaController;
 use App\Http\Controllers\Api\PresencaController;
 use App\Http\Controllers\Api\ScoutController;
+use App\Http\Controllers\Api\TenantBrandingController;
 use App\Http\Controllers\Api\VaquinhaController;
+use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
+
+// 0. WHITELABEL & ONBOARDING PÚBLICO
+Route::post('/onboarding', [OnboardingController::class, 'store']);
+Route::get('/planos', [BillingController::class, 'indexPlanos']);
+Route::post('/webhooks/pagamentos', [WebhookController::class, 'handle']);
 
 // 1. AUTENTICAÇÃO (Laravel Sanctum & Google GIS)
 Route::prefix('auth')->group(function () {
@@ -23,7 +32,17 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/impersonate', [AdminController::class, 'impersonate']);
+        Route::post('/stop-impersonate', [AdminController::class, 'stopImpersonate']);
     });
+});
+
+// 1.1 BRANDING & ASSINATURAS DO CLUBE (Autenticado)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/tenant/branding', [TenantBrandingController::class, 'show']);
+    Route::put('/tenant/branding', [TenantBrandingController::class, 'update']);
+    Route::post('/assinaturas/checkout', [BillingController::class, 'checkout']);
+    Route::get('/assinaturas/minha', [BillingController::class, 'minhaAssinatura']);
 });
 
 // 2. ELENCO & ATLETAS (Leitura pública, cadastro autenticado)
@@ -119,6 +138,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:root'])->group(functio
 
     // 4.9 Leads de Investidores & Parcerias
     Route::get('/leads/investor', [InvestorLeadController::class, 'index']);
+
+    // 4.10 Gestão Whitelabel & Clubes
+    Route::get('/times', [AdminController::class, 'indexTimes']);
+    Route::post('/impersonate', [AdminController::class, 'impersonate']);
+    Route::post('/stop-impersonate', [AdminController::class, 'stopImpersonate']);
 });
 
 // 5. LEADS COMERCIAIS & INVESTIDORES (Landing Page Pública)

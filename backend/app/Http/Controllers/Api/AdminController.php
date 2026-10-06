@@ -828,4 +828,81 @@ class AdminController extends Controller
             'message' => 'Scout removido com sucesso.'
         ]);
     }
+
+    // ==========================================
+    // 5. GESTÃO WHITELABEL & PERSONIFICAÇÃO
+    // ==========================================
+
+    public function indexTimes(Request $request): JsonResponse
+    {
+        $times = Time::with(['plano', 'assinaturaAtiva'])
+            ->withCount('atletas')
+            ->orderBy('nome')
+            ->get();
+
+        return response()->json($times);
+    }
+
+    public function impersonate(Request $request): JsonResponse
+    {
+        $user = $request->user('sanctum') ?? $request->user();
+
+        if (!$user || !$user->isRoot()) {
+            return response()->json(['message' => 'Acesso negado. Apenas superusuários ROOT podem personificar agremiações.'], 403);
+        }
+
+        $validated = $request->validate([
+            'time_id' => 'required|uuid|exists:times,id',
+        ]);
+
+        $time = Time::findOrFail($validated['time_id']);
+
+        // Registra o log de auditoria
+        \App\Models\ImpersonationLog::create([
+            'root_user_id' => $user->id,
+            'time_id' => $time->id,
+            'action' => 'start',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        // Emite token especial com habilidade de personificação
+        $token = $user->createToken("impersonate-{$time->id}", ['*'])->plainTextToken;
+
+        return response()->json([
+            'message' => "Sessão de suporte iniciada para {$time->nome}.",
+            'impersonating' => true,
+            'token' => $token,
+            'tenant' => [
+                'id' => $time->id,
+                'nome' => $time->nome,
+                'sigla' => $time->sigla,
+                'escudo_url' => $time->escudo_url,
+                'cor_primaria' => $time->cor_primaria,
+                'cor_secundaria' => $time->cor_secundaria,
+                'status' => $time->status,
+            ],
+        ]);
+    }
+
+    public function stopImpersonate(Request $request): JsonResponse
+    {
+        $user = $request->user('sanctum') ?? $request->user();
+
+        if ($user && $user->isRoot()) {
+            \App\Models\ImpersonationLog::create([
+                'root_user_id' => $user->id,
+                'time_id' => $user->time_id ?? Time::first()?->id,
+                'action' => 'stop',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Sessão de personificação encerrada.',
+            'impersonating' => false,
+        ]);
+    }
 }
+
