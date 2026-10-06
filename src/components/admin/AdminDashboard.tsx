@@ -31,8 +31,10 @@ import {
   Target,
   Activity,
   Minus,
+  Clock,
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { whitelabelService } from '../../services/whitelabelService';
 import {
   AdminUserDTO,
   AdminAtletaDTO,
@@ -50,7 +52,7 @@ interface AdminDashboardProps {
   onBackToMatch: () => void;
 }
 
-type AdminTab = 'users' | 'atletas' | 'partidas' | 'locais' | 'adversarios' | 'caixa' | 'patrimonio' | 'scouts';
+type AdminTab = 'users' | 'atletas' | 'partidas' | 'locais' | 'adversarios' | 'caixa' | 'patrimonio' | 'scouts' | 'times';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
@@ -65,6 +67,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
   const [patrimonio, setPatrimonio] = useState<AdminPatrimonioDTO[]>([]);
   const [locais, setLocais] = useState<AdminLocalDTO[]>([]);
   const [adversarios, setAdversarios] = useState<AdminAdversarioDTO[]>([]);
+  const [timesList, setTimesList] = useState<any[]>([]);
 
   // Filtros
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -217,11 +220,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         if (!selectedScoutPartidaId && partidasData.length > 0) {
           setSelectedScoutPartidaId(partidasData[0].id);
         }
+      } else if (tab === 'times') {
+        const data = await whitelabelService.getTimesAdmin();
+        setTimesList(data);
       }
     } catch (err: any) {
       showToast(err.message || 'Falha ao carregar dados.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImpersonateTime = async (time: any) => {
+    if (!window.confirm(`Deseja iniciar sessão de suporte técnico personificando a agremiação "${time.nome}"?`)) return;
+    try {
+      const res = await whitelabelService.impersonate(time.id);
+      localStorage.setItem('na_prancheta_token', res.token);
+      localStorage.setItem('naprancheta_impersonated_club', JSON.stringify(res.tenant));
+      showToast(`Sessão de suporte iniciada para ${time.nome}. Redirecionando...`);
+      setTimeout(() => {
+        window.location.reload();
+      }, 700);
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao personificar agremiação.', 'error');
     }
   };
 
@@ -702,6 +723,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-zinc-800 text-xs font-semibold scrollbar-none">
           {[
             { id: 'users', label: 'Usuários & Perfis', icon: KeyRound, count: users.length },
+            { id: 'times', label: 'Clubes & Whitelabel', icon: Shield, count: timesList.length },
             { id: 'atletas', label: 'Elenco & Atletas', icon: Users, count: atletas.length },
             { id: 'partidas', label: 'Partidas & Agenda', icon: Calendar, count: partidas.length },
             { id: 'locais', label: 'Locais & Campos', icon: MapPin, count: locais.length },
@@ -2205,6 +2227,170 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMatch })
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* ABA 9: CLUBES & WHITELABEL */}
+        {/* ========================================================= */}
+        {activeTab === 'times' && (
+          <div className="mt-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800">
+              <div>
+                <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                  Agremiações Cadastradas no Ecossistema
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Gerencie os clubes cadastrados, status da assinatura e acesse o modo de suporte técnico (Personificação).
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar agremiação..."
+                    className="pl-8 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white outline-none w-48 transition"
+                  />
+                </div>
+                <button
+                  onClick={() => loadData('times')}
+                  disabled={loading}
+                  className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl transition"
+                  title="Atualizar lista de clubes"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-zinc-950 text-zinc-400 font-bold border-b border-zinc-800">
+                    <tr>
+                      <th className="py-3 px-4">Agremiação</th>
+                      <th className="py-3 px-4">Modalidade</th>
+                      <th className="py-3 px-4">Plano Atual</th>
+                      <th className="py-3 px-4">Status & Trial</th>
+                      <th className="py-3 px-4 text-center">Atletas</th>
+                      <th className="py-3 px-4 text-center">Cores</th>
+                      <th className="py-3 px-4 text-right">Ações de Suporte</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                    {timesList
+                      .filter((t) =>
+                        t.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (t.sigla && t.sigla.toLowerCase().includes(searchQuery.toLowerCase()))
+                      )
+                      .map((t) => (
+                        <tr key={t.id} className="hover:bg-zinc-800/30 transition">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden border shadow-sm shrink-0"
+                                style={{
+                                  backgroundColor: t.cor_primaria ? `${t.cor_primaria}25` : '#18181b',
+                                  borderColor: t.cor_secundaria || '#27272a',
+                                }}
+                              >
+                                {t.escudo_url ? (
+                                  <img
+                                    src={t.escudo_url}
+                                    alt={t.nome}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <Shield className="w-4 h-4" style={{ color: t.cor_primaria || '#34d399' }} />
+                                )}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white block">{t.nome}</span>
+                                {t.sigla && (
+                                  <span className="text-[10px] text-zinc-400 font-mono">
+                                    Sigla: {t.sigla}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-zinc-400">
+                            {t.modalidade || 'Futebol de Campo'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-200 border border-zinc-700">
+                              {t.plano?.nome || (t.status === 'trial' ? 'Campeão (Trial)' : 'Amador')}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            {t.status === 'trial' && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                <Clock className="w-2.5 h-2.5" />
+                                Trial
+                              </span>
+                            )}
+                            {t.status === 'ativo' && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                Ativo
+                              </span>
+                            )}
+                            {t.status === 'suspenso' && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                                <AlertCircle className="w-2.5 h-2.5" />
+                                Suspenso
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-center font-bold text-zinc-200">
+                            {t.atletas_count ?? '-'}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="flex items-center justify-center -space-x-1">
+                              <span
+                                className="w-3.5 h-3.5 rounded-full border border-black/60 shadow-sm"
+                                style={{ backgroundColor: t.cor_primaria || '#16a34a' }}
+                                title={`Primária: ${t.cor_primaria}`}
+                              />
+                              <span
+                                className="w-3.5 h-3.5 rounded-full border border-black/60 shadow-sm"
+                                style={{ backgroundColor: t.cor_secundaria || '#ffffff' }}
+                                title={`Secundária: ${t.cor_secundaria}`}
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleImpersonateTime(t)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shadow-sm"
+                              title="Personificar esta agremiação para suporte técnico"
+                            >
+                              <Shield className="w-3.5 h-3.5 text-rose-400" />
+                              <span>Personificar</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    {timesList.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="text-center py-8 text-zinc-500">
+                          Nenhuma agremiação encontrada.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </main>

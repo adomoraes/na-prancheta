@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NivelAcesso } from '../types';
+import { NivelAcesso, TenantBranding } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Shield,
@@ -17,6 +17,10 @@ import {
   Settings2,
   FileCode2,
   ExternalLink,
+  Palette,
+  CreditCard,
+  Building2,
+  AlertTriangle,
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -28,6 +32,10 @@ interface HeaderProps {
   currentView?: 'match' | 'admin';
   onToggleAdminView?: () => void;
   onGoToLanding?: () => void;
+  tenant?: TenantBranding | null;
+  onOpenBranding?: () => void;
+  onOpenPlans?: () => void;
+  onOpenClubOnboarding?: () => void;
 }
 
 const ROLE_CONFIG: Record<
@@ -74,6 +82,10 @@ export const Header: React.FC<HeaderProps> = ({
   currentView = 'match',
   onToggleAdminView,
   onGoToLanding,
+  tenant,
+  onOpenBranding,
+  onOpenPlans,
+  onOpenClubOnboarding,
 }) => {
   const { user, isAuthenticated, activeRole, setActiveRole, logout, openLoginModal } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -98,17 +110,67 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 sm:gap-3 h-12 sm:h-auto">
         {/* Brand & Status */}
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400 shadow-sm shrink-0">
-            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+          <div
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center overflow-hidden shadow-sm shrink-0"
+            style={{
+              backgroundColor: tenant?.cor_primaria ? `${tenant.cor_primaria}25` : '#18181b',
+              borderColor: tenant?.cor_secundaria || '#27272a',
+            }}
+          >
+            {tenant?.escudo_url ? (
+              <img
+                src={tenant.escudo_url}
+                alt={tenant.nome}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <Shield
+                className="w-4 h-4 sm:w-5 sm:h-5"
+                style={{ color: tenant?.cor_primaria || '#34d399' }}
+              />
+            )}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <h1 className="font-extrabold text-sm sm:text-lg tracking-tight text-zinc-100 font-['Cabinet_Grotesk',sans-serif] truncate">
-                Na Prancheta
+                {tenant?.nome || 'Na Prancheta'}
               </h1>
-              <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Target v2.0
-              </span>
+              {tenant?.sigla && (
+                <span
+                  className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded"
+                  style={{
+                    backgroundColor: `${tenant.cor_primaria || '#16a34a'}25`,
+                    color: tenant.cor_primaria || '#34d399',
+                  }}
+                >
+                  {tenant.sigla}
+                </span>
+              )}
+              {tenant?.status === 'trial' && onOpenPlans && (
+                <button
+                  type="button"
+                  onClick={onOpenPlans}
+                  className="text-[9px] font-bold tracking-wide px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition cursor-pointer flex items-center gap-1"
+                  title="Clique para ver planos de assinatura"
+                >
+                  <Clock className="w-2.5 h-2.5" />
+                  <span>Trial {tenant.dias_restantes_trial ?? 14}d</span>
+                </button>
+              )}
+              {tenant?.is_suspenso && onOpenPlans && (
+                <button
+                  type="button"
+                  onClick={onOpenPlans}
+                  className="text-[9px] font-bold tracking-wide px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/30 hover:bg-rose-500/20 transition cursor-pointer flex items-center gap-1 animate-pulse"
+                  title="Assinatura suspensa. Clique para regularizar"
+                >
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  <span>Suspenso</span>
+                </button>
+              )}
               <span
                 className={`text-[9px] font-semibold tracking-wide px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1 border shrink-0 ${
                   apiConnected
@@ -129,7 +191,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="hidden sm:inline">{apiConnected ? 'Laravel 11 + PG16' : 'Offline'}</span>
               </span>
             </div>
-            <p className="hidden sm:block text-xs text-zinc-400">Gestão Esportiva & Vestiário Amador</p>
+            <p className="hidden sm:block text-xs text-zinc-400">
+              {tenant?.modalidade || 'Gestão Esportiva & Vestiário Amador'}
+            </p>
           </div>
         </div>
 
@@ -172,6 +236,17 @@ export const Header: React.FC<HeaderProps> = ({
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden md:inline">Vitrine Comercial</span>
               <span className="md:hidden">Vitrine</span>
+            </button>
+          )}
+
+          {onOpenClubOnboarding && (
+            <button
+              onClick={onOpenClubOnboarding}
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-semibold transition active:scale-95"
+              title="Cadastrar nova agremiação no Na Prancheta"
+            >
+              <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Novo Clube</span>
             </button>
           )}
 
@@ -277,6 +352,46 @@ export const Header: React.FC<HeaderProps> = ({
                     >
                       <Settings2 className="w-3.5 h-3.5 text-rose-400" />
                       <span>{currentView === 'admin' ? 'Voltar ao Dia de Jogo' : 'Painel Admin ROOT'}</span>
+                    </button>
+                  )}
+
+                  {/* Gestão Whitelabel do Clube */}
+                  {onOpenBranding && (user.role === 'gestor' || user.role === 'geral' || user.role === 'root') && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onOpenBranding();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 rounded-lg transition font-medium"
+                    >
+                      <Palette className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Identidade Visual & Escudo</span>
+                    </button>
+                  )}
+
+                  {onOpenPlans && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onOpenPlans();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 rounded-lg transition font-medium"
+                    >
+                      <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Planos & Assinatura</span>
+                    </button>
+                  )}
+
+                  {onOpenClubOnboarding && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onOpenClubOnboarding();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 rounded-lg transition font-medium"
+                    >
+                      <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Cadastrar Nova Agremiação</span>
                     </button>
                   )}
 

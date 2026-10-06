@@ -8,6 +8,7 @@ import {
   EventoScout,
   PatrimonioItem,
   StatusConfirmacao,
+  TenantBranding,
 } from './types';
 import {
   ATLETAS_INICIAIS,
@@ -18,6 +19,7 @@ import {
   PATRIMONIO_INICIAL,
 } from './data/initialData';
 import { api } from './services/api';
+import { whitelabelService, applyBrandingToCssVars } from './services/whitelabelService';
 import { Header } from './components/Header';
 import { VestiarioTimeline } from './components/VestiarioTimeline';
 import { MatchCardConfirmacao } from './components/MatchCardConfirmacao';
@@ -35,7 +37,11 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LandingPage } from './components/landing/LandingPage';
 import { MobileNavigation } from './components/navigation/MobileNavigation';
 import { BottomSheet } from './components/ui/BottomSheet';
-import { Calendar, Shield, DollarSign, Trophy, Package, Lock } from 'lucide-react';
+import { ClubOnboardingModal } from './components/whitelabel/ClubOnboardingModal';
+import { TenantBrandingModal } from './components/whitelabel/TenantBrandingModal';
+import { PlansCheckoutModal } from './components/whitelabel/PlansCheckoutModal';
+import { ImpersonationBanner } from './components/whitelabel/ImpersonationBanner';
+import { Calendar, Shield, DollarSign, Trophy, Package, Lock, Palette, CreditCard, Building2, AlertTriangle } from 'lucide-react';
 
 function AppContent() {
   const pwaState = usePwa();
@@ -71,6 +77,50 @@ function AppContent() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState<boolean>(false);
   const [apiConnected, setApiConnected] = useState<boolean>(false);
+
+  // Estados de Whitelabel, Multi-tenancy e Monetização
+  const [tenant, setTenant] = useState<TenantBranding | null>(null);
+  const [isClubOnboardingOpen, setIsClubOnboardingOpen] = useState(false);
+  const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [impersonatedClub, setImpersonatedClub] = useState<TenantBranding | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('naprancheta_impersonated_club');
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
+
+  const refreshTenant = async () => {
+    try {
+      const t = await whitelabelService.getTenantBranding();
+      if (t) {
+        setTenant(t);
+        applyBrandingToCssVars(t);
+      }
+    } catch (err) {
+      console.warn('Não foi possível carregar branding do tenant:', err);
+    }
+  };
+
+  useEffect(() => {
+    refreshTenant();
+  }, [user]);
+
+  const handleExitImpersonation = () => {
+    localStorage.removeItem('naprancheta_impersonated_club');
+    setImpersonatedClub(null);
+    window.location.reload();
+  };
+
+  const handleClubOnboarded = (res: any) => {
+    if (res.tenant) {
+      setTenant(res.tenant);
+      applyBrandingToCssVars(res.tenant);
+    }
+    setIsClubOnboardingOpen(false);
+    setViewMode('app');
+  };
 
   // Detecção de teclado virtual móvel para auto-ocultação da Bottom Navigation Bar (D-03)
   useEffect(() => {
@@ -452,6 +502,9 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
         <PwaPrompt pwaState={pwaState} />
+        {impersonatedClub && (
+          <ImpersonationBanner clubName={impersonatedClub.nome} onExit={handleExitImpersonation} />
+        )}
         <Header
           onOpenOnboarding={() => setIsOnboardingOpen(true)}
           apiConnected={apiConnected}
@@ -460,9 +513,32 @@ function AppContent() {
           currentView={currentView}
           onToggleAdminView={() => setCurrentView('match')}
           onGoToLanding={handleGoToLanding}
+          tenant={tenant}
+          onOpenBranding={() => setIsBrandingModalOpen(true)}
+          onOpenPlans={() => setIsPlansModalOpen(true)}
+          onOpenClubOnboarding={() => setIsClubOnboardingOpen(true)}
         />
         <AdminDashboard onBackToMatch={() => setCurrentView('match')} />
         <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
+        <ClubOnboardingModal
+          isOpen={isClubOnboardingOpen}
+          onClose={() => setIsClubOnboardingOpen(false)}
+          onSuccess={handleClubOnboarded}
+        />
+        <TenantBrandingModal
+          isOpen={isBrandingModalOpen}
+          onClose={() => setIsBrandingModalOpen(false)}
+          tenant={tenant}
+          onTenantUpdated={(t) => {
+            setTenant(t);
+            applyBrandingToCssVars(t);
+          }}
+        />
+        <PlansCheckoutModal
+          isOpen={isPlansModalOpen}
+          onClose={() => setIsPlansModalOpen(false)}
+          onSubscriptionUpdated={refreshTenant}
+        />
       </div>
     );
   }
@@ -472,7 +548,31 @@ function AppContent() {
       {/* PWA Manager */}
       <PwaPrompt pwaState={pwaState} />
 
-      {/* Header com Perfil Autenticado & RBAC */}
+      {/* Barra de Suporte ROOT se personificando */}
+      {impersonatedClub && (
+        <ImpersonationBanner clubName={impersonatedClub.nome} onExit={handleExitImpersonation} />
+      )}
+
+      {/* Banner de Aviso de Assinatura Suspensa */}
+      {tenant?.is_suspenso && (
+        <div className="bg-rose-950 border-b border-rose-500/40 text-rose-200 px-4 py-2.5 text-xs flex items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 animate-pulse" />
+            <span>
+              <strong>Atenção:</strong> A assinatura da agremiação está suspensa. Regularize o plano via PIX para reativar todas as funcionalidades.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsPlansModalOpen(true)}
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg transition text-xs shrink-0 cursor-pointer"
+          >
+            Ver Planos
+          </button>
+        </div>
+      )}
+
+      {/* Header com Perfil Autenticado, Tenant Branding & RBAC */}
       <Header
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
         apiConnected={apiConnected}
@@ -487,6 +587,10 @@ function AppContent() {
           }
         }}
         onGoToLanding={handleGoToLanding}
+        tenant={tenant}
+        onOpenBranding={() => setIsBrandingModalOpen(true)}
+        onOpenPlans={() => setIsPlansModalOpen(true)}
+        onOpenClubOnboarding={() => setIsClubOnboardingOpen(true)}
       />
 
       {/* Conteúdo Principal com padding inferior responsivo para acomodar a Bottom Navigation */}
@@ -731,6 +835,65 @@ function AppContent() {
             </button>
           )}
 
+          {/* Identidade Visual do Clube (Gestor / Geral / ROOT) */}
+          {(user?.role === 'gestor' || user?.role === 'geral' || user?.role === 'root') && (
+            <button
+              onClick={() => {
+                setIsMoreSheetOpen(false);
+                setIsBrandingModalOpen(true);
+              }}
+              className="touch-target p-3.5 rounded-2xl bg-zinc-800/40 hover:bg-zinc-800/70 border border-zinc-700/50 flex items-center justify-between text-left transition active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <Palette className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-zinc-200">Identidade Visual & Escudo</p>
+                  <p className="text-xs text-zinc-400">Personalize cores e imagem do clube</p>
+                </div>
+              </div>
+            </button>
+          )}
+
+          {/* Planos & Assinatura */}
+          <button
+            onClick={() => {
+              setIsMoreSheetOpen(false);
+              setIsPlansModalOpen(true);
+            }}
+            className="touch-target p-3.5 rounded-2xl bg-amber-950/20 hover:bg-amber-950/30 border border-amber-900/40 flex items-center justify-between text-left transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <CreditCard className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-200">Planos & Assinatura</p>
+                <p className="text-xs text-amber-400/80">Gerencie a assinatura e upgrade via PIX</p>
+              </div>
+            </div>
+          </button>
+
+          {/* Cadastrar Nova Agremiação */}
+          <button
+            onClick={() => {
+              setIsMoreSheetOpen(false);
+              setIsClubOnboardingOpen(true);
+            }}
+            className="touch-target p-3.5 rounded-2xl bg-blue-950/20 hover:bg-blue-950/30 border border-blue-900/40 flex items-center justify-between text-left transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-blue-200">Cadastrar Nova Agremiação</p>
+                <p className="text-xs text-blue-400/80">Crie seu clube com 14 dias grátis de trial</p>
+              </div>
+            </div>
+          </button>
+
           {/* Cadastrar Novo Atleta */}
           <button
             onClick={() => {
@@ -776,6 +939,29 @@ function AppContent() {
         isOpen={isOnboardingOpen}
         onClose={() => setIsOnboardingOpen(false)}
         onAddAtleta={handleAddAtleta}
+      />
+
+      {/* Modais de Whitelabel, Branding e Monetização */}
+      <ClubOnboardingModal
+        isOpen={isClubOnboardingOpen}
+        onClose={() => setIsClubOnboardingOpen(false)}
+        onSuccess={handleClubOnboarded}
+      />
+
+      <TenantBrandingModal
+        isOpen={isBrandingModalOpen}
+        onClose={() => setIsBrandingModalOpen(false)}
+        tenant={tenant}
+        onTenantUpdated={(t) => {
+          setTenant(t);
+          applyBrandingToCssVars(t);
+        }}
+      />
+
+      <PlansCheckoutModal
+        isOpen={isPlansModalOpen}
+        onClose={() => setIsPlansModalOpen(false)}
+        onSubscriptionUpdated={refreshTenant}
       />
 
       {/* Modal de Autenticação & Login Google */}
