@@ -1,4 +1,4 @@
-export type NivelAcesso = 'atleta' | 'tecnico' | 'financeiro' | 'geral' | 'almoxarifado' | 'root';
+export type NivelAcesso = 'atleta' | 'tecnico' | 'financeiro' | 'geral' | 'almoxarifado' | 'root' | 'gestor';
 export type TipoVinculo = 'mensalista' | 'convidado' | 'inativo';
 export type TipoEvento = 'amistoso' | 'campeonato' | 'treino' | 'evento_social';
 export type StatusConfirmacao = 'confirmado' | 'recusado' | 'duvida' | 'lista_espera';
@@ -324,4 +324,100 @@ export interface BottomSheetAction {
   onClick: () => void;
   variant?: 'default' | 'danger' | 'highlight';
 }
+
+// Tipos para Whitelabel, Multi-tenancy e Monetização (Feature 012)
+export interface TenantBranding {
+  id: string;
+  nome: string;
+  sigla?: string;
+  slug?: string;
+  escudo_url?: string | null;
+  cor_primaria: string;
+  cor_secundaria: string;
+  modalidade?: string;
+  status: 'trial' | 'ativo' | 'carencia' | 'suspenso' | 'cancelado';
+  trial_ends_at?: string | null;
+  dias_restantes_trial?: number;
+  is_suspenso?: boolean;
+}
+
+export interface PlanoAssinatura {
+  id: number;
+  slug: 'amador' | 'campeao' | 'liga';
+  nome: string;
+  descricao: string;
+  preco_mensal_centavos: number;
+  preco_anual_centavos: number;
+  max_elencos: number;
+  max_atletas: number;
+  recursos: string[];
+  ativo: boolean;
+}
+
+export interface OnboardingClubPayload {
+  nome_clube: string;
+  sigla?: string;
+  modalidade?: string;
+  nome_gestor: string;
+  email: string;
+  phone?: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export interface OnboardingResponse {
+  message: string;
+  token: string;
+  user: {
+    id: string | number;
+    name: string;
+    email: string;
+    role: string;
+    time_id: string;
+  };
+  tenant: TenantBranding;
+}
+
+export interface FaturaCheckoutResponse {
+  message: string;
+  fatura_id: string;
+  valor_centavos: number;
+  valor_formatado: string;
+  metodo_pagamento: string;
+  status: string;
+  pix_copia_cola: string;
+  pix_qrcode_url: string;
+  expira_em: string;
+}
+
+export interface MinhaAssinaturaResponse {
+  time_id: string;
+  clube_nome: string;
+  status: string;
+  trial_ends_at?: string | null;
+  dias_restantes_trial: number;
+  is_suspenso: boolean;
+  plano?: {
+    slug: string;
+    nome: string;
+    preco_mensal_centavos: number;
+    max_elencos: number;
+    max_atletas: number;
+  } | null;
+  assinatura?: {
+    id: string;
+    ciclo: string;
+    status: string;
+    data_proxima_cobranca: string;
+  } | null;
+  faturas_recentes?: Array<{
+    id: string;
+    valor_centavos: number;
+    status: string;
+    metodo: string;
+    data_pagamento?: string | null;
+    created_at?: string;
+  }>;
+}
+
 
