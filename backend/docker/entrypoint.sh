@@ -41,6 +41,13 @@ if [ -n "$DB_HOST" ]; then
             echo "🌱 Banco recém-criado: executando seeder com dados de teste/partida piloto..."
             php artisan db:seed --class=LegacyInitialDataSeeder --force || true
         fi
+
+        # Seed de planos padrão caso a tabela de planos esteja vazia
+        PLANO_COUNT=$(php artisan tinker --execute="echo App\\Models\\Plano::count();" 2>/dev/null || echo "1")
+        if [ "$PLANO_COUNT" = "0" ]; then
+            echo "💎 Catálogo de planos vazio: executando seeder de planos padrão (Amador, Campeão, Liga)..."
+            php artisan db:seed --class=PlanosSeeder --force || true
+        fi
     fi
 fi
 
