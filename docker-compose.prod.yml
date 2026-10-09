@@ -55,7 +55,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres_prod_secret}
       SESSION_DRIVER: database
       CACHE_STORE: database
+      CACHE_DRIVER: database
       QUEUE_CONNECTION: database
+      REDIS_HOST: 127.0.0.1
+      REDIS_URL: ""
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-}
       FRONTEND_URL: ${FRONTEND_URL:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
