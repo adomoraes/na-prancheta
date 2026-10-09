@@ -18,16 +18,16 @@ RUN composer install \
 # Estágio 2: Runtime PHP 8.2-FPM + Nginx em Alpine Linux
 FROM php:8.2-fpm-alpine
 
+# Instalador de extensões PHP oficial e ultrarrápido (usa binários pré-compilados)
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
 # Dependências do sistema e extensões PHP necessárias para PostgreSQL e Laravel
 RUN apk add --no-cache \
     nginx \
-    postgresql-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    curl \
     supervisor \
-    && docker-php-ext-install pdo pdo_pgsql opcache bcmath zip
+    curl \
+    unzip \
+    && install-php-extensions pdo_pgsql opcache bcmath zip
 
 WORKDIR /var/www/html
 
