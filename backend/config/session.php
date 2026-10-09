@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'database'),
+    'driver' => env('SESSION_DRIVER') === 'redis' ? 'database' : env('SESSION_DRIVER', 'database'),
 
     /*
     |--------------------------------------------------------------------------

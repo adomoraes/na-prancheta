@@ -3,6 +3,20 @@ set -e
 
 echo "⚽ [Na Prancheta] Inicializando Backend Laravel..."
 
+# Blindagem: Sanitiza variáveis de ambiente e neutraliza qualquer injeção do host coolify-redis
+export REDIS_HOST="127.0.0.1"
+export REDIS_URL=""
+if [ "$CACHE_STORE" = "redis" ] || [ "$CACHE_DRIVER" = "redis" ] || [ -z "$CACHE_STORE" ]; then
+    export CACHE_STORE="database"
+    export CACHE_DRIVER="database"
+fi
+if [ "$SESSION_DRIVER" = "redis" ] || [ -z "$SESSION_DRIVER" ]; then
+    export SESSION_DRIVER="database"
+fi
+if [ "$QUEUE_CONNECTION" = "redis" ] || [ -z "$QUEUE_CONNECTION" ]; then
+    export QUEUE_CONNECTION="database"
+fi
+
 # Garante permissões em tempo de execução
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
